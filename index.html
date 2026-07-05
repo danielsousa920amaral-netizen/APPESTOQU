@@ -5,11 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Estoque + Faturamento</title>
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-    <!-- Firebase (para quem quiser usar nuvem) -->
+    <!-- Firebase compat -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <style>
-        /* ===== ESTILOS ORIGINAIS (COMPACTOS) ===== */
+        /* ===== ESTILOS (compactos, mantidos) ===== */
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
         html, body {
             width: 100%;
@@ -46,17 +46,13 @@
             align-items: center;
             gap: 4px;
         }
-        .header-left h1:hover {
-            color: #2563eb;
-        }
+        .header-left h1:hover { color: #2563eb; }
         .header-left h1 .edit-icon {
             font-size: 12px;
             opacity: 0.5;
             transition: 0.2s;
         }
-        .header-left h1:hover .edit-icon {
-            opacity: 1;
-        }
+        .header-left h1:hover .edit-icon { opacity: 1; }
         .header-left h1 small {
             font-size: 10px;
             font-weight: 400;
@@ -99,7 +95,6 @@
         .btn-extrato { background: #1e40af; color: #fff; }
         .btn-flash { background: #fbbf24; color: #0f172a; }
         .btn-flash.on { background: #16a34a; color: #fff; }
-        .btn-uso { background: #dc2626; color: #fff; }
         .btn-uso-header {
             background: #dc2626;
             color: #fff;
@@ -117,9 +112,7 @@
             transform: scale(1.03);
             box-shadow: 0 4px 12px rgba(220, 38, 38, 0.6);
         }
-        .btn-uso-header:active {
-            transform: scale(0.97);
-        }
+        .btn-uso-header:active { transform: scale(0.97); }
 
         .btn-ler-codigo {
             background: linear-gradient(135deg, #8b5cf6, #6d28d9);
@@ -282,12 +275,8 @@
             border-color: transparent;
             background: #fff;
         }
-        .form-row .form-group.price {
-            min-width: 50px;
-        }
-        .form-row .form-group.price input {
-            width: 60px;
-        }
+        .form-row .form-group.price { min-width: 50px; }
+        .form-row .form-group.price input { width: 60px; }
 
         .flex-row {
             display: flex;
@@ -1238,13 +1227,6 @@
 
     <script>
         // ============================================================
-        //  SERVICE WORKER (opcional)
-        // ============================================================
-        if ('serviceWorker' in navigator) {
-            // Mantido para compatibilidade, mas pode remover se não quiser
-        }
-
-        // ============================================================
         //  FIREBASE CONFIG (opcional, mas mantido)
         // ============================================================
         const firebaseConfig = {
@@ -1256,7 +1238,6 @@
             appId: "1:779055449959:web:9b7ccd3db615611b7691c2"
         };
 
-        // Inicializa Firebase se disponível
         let db = null;
         if (typeof firebase !== 'undefined' && firebase.initializeApp) {
             try {
@@ -1278,56 +1259,67 @@
         let cardapioFotos = [];
         let syncInProgress = false;
 
-        // Leitores
         let html5CadastroReader = null,
             html5ComprasReader = null,
             html5NotinhaReader = null,
             html5UsoReader = null;
         let produtoEscaneadoCompra = null,
             produtoEscaneadoUso = null;
-
-        // Flash
         let flashState = { cadastro: false, compras: false, notinha: false, uso: false };
 
         // ============================================================
-        //  FUNÇÕES DE SINCRONIZAÇÃO FIRESTORE (com fallback localStorage)
+        //  FUNÇÕES DE SINCRONIZAÇÃO (FIRESTORE + LOCALSTORAGE)
         // ============================================================
         async function carregarDadosDoFirestore() {
             try {
                 if (!db) throw new Error('Firestore não disponível');
 
+                // Carrega estoque
                 const estoqueSnap = await db.collection('estoque').get();
-                estoque = [];
+                let estoqueFirestore = [];
                 estoqueSnap.forEach(doc => {
-                    estoque.push({ id: doc.id, ...doc.data() });
+                    estoqueFirestore.push({ id: doc.id, ...doc.data() });
                 });
 
+                // Carrega vendas
                 const vendasSnap = await db.collection('vendas').get();
-                vendas = [];
+                let vendasFirestore = [];
                 vendasSnap.forEach(doc => {
-                    vendas.push({ id: doc.id, ...doc.data() });
+                    vendasFirestore.push({ id: doc.id, ...doc.data() });
                 });
 
+                // Carrega carrinho
                 const carrinhoSnap = await db.collection('carrinho').doc('lista').get();
+                let carrinhoFirestore = [];
                 if (carrinhoSnap.exists) {
-                    carrinho = carrinhoSnap.data().itens || [];
-                } else {
-                    carrinho = [];
+                    carrinhoFirestore = carrinhoSnap.data().itens || [];
                 }
 
+                // Carrega mercados
                 const mercadosSnap = await db.collection('config').doc('mercados').get();
+                let mercadosFirestore = ['Extra', 'Atacadão', 'Mercado Livre'];
                 if (mercadosSnap.exists) {
-                    mercados = mercadosSnap.data().lista || ['Extra', 'Atacadão', 'Mercado Livre'];
+                    mercadosFirestore = mercadosSnap.data().lista || ['Extra', 'Atacadão', 'Mercado Livre'];
                 }
 
+                // Carrega cardápio
                 const cardapioSnap = await db.collection('cardapio').get();
-                cardapioFotos = [];
+                let cardapioFirestore = [];
                 cardapioSnap.forEach(doc => {
-                    cardapioFotos.push({ id: doc.id, ...doc.data() });
+                    cardapioFirestore.push({ id: doc.id, ...doc.data() });
                 });
 
-                // Se não veio nada, tenta localStorage
-                if (estoque.length === 0) {
+                // ===== DECISÃO: usar Firestore ou localStorage =====
+                // Se o Firestore tiver dados (estoque não vazio), usar Firestore.
+                // Senão, tentar carregar do localStorage e depois migrar.
+                if (estoqueFirestore.length > 0) {
+                    estoque = estoqueFirestore;
+                    vendas = vendasFirestore;
+                    carrinho = carrinhoFirestore;
+                    mercados = mercadosFirestore;
+                    cardapioFotos = cardapioFirestore;
+                } else {
+                    // Fallback para localStorage
                     const localData = localStorage.getItem('estoqueApp');
                     if (localData) {
                         const parsed = JSON.parse(localData);
@@ -1335,11 +1327,28 @@
                         vendas = parsed.vendas || [];
                         carrinho = parsed.carrinho || [];
                         mercados = parsed.mercados || ['Extra', 'Atacadão', 'Mercado Livre'];
+                        // Migra para Firestore
                         await salvarDadosNoFirestore();
                         localStorage.removeItem('estoqueApp');
+                    } else {
+                        // Inicializa com padrão
+                        estoque = [];
+                        vendas = [];
+                        carrinho = [];
+                        mercados = ['Extra', 'Atacadão', 'Mercado Livre'];
+                    }
+                    const localCardapio = localStorage.getItem('cardapioApp');
+                    if (localCardapio) {
+                        cardapioFotos = JSON.parse(localCardapio);
+                        // Migra para Firestore
+                        await salvarDadosNoFirestore();
+                        localStorage.removeItem('cardapioApp');
+                    } else {
+                        cardapioFotos = [];
                     }
                 }
 
+                // Atualiza interface
                 renderizarTudo();
                 document.getElementById('syncStatus').textContent = '✅ Sincronizado';
                 document.getElementById('syncStatus').style.color = '#16a34a';
@@ -1357,7 +1366,7 @@
             try {
                 const batch = db.batch();
 
-                // Limpa estoque
+                // Limpa e recria estoque
                 const snapEst = await db.collection('estoque').get();
                 snapEst.forEach(doc => batch.delete(doc.ref));
                 estoque.forEach(item => {
@@ -1365,7 +1374,7 @@
                     batch.set(ref, item);
                 });
 
-                // Limpa vendas
+                // Limpa e recria vendas
                 const snapVen = await db.collection('vendas').get();
                 snapVen.forEach(doc => batch.delete(doc.ref));
                 vendas.forEach(item => {
@@ -1521,7 +1530,7 @@
         }
 
         // ============================================================
-        //  LEITOR DE QR CODE - VERSÃO CORRIGIDA E ROBUSTA
+        //  LEITOR DE QR CODE - VERSÃO CORRIGIDA
         // ============================================================
         function iniciarLeitor(containerId, resultDivId, onSuccess) {
             var container = document.getElementById(containerId);
@@ -1545,7 +1554,7 @@
 
             var reader = null;
             var tentativaAtual = 0;
-            var modos = ['environment', 'user']; // traseira, depois frontal
+            var modos = ['environment', 'user'];
 
             function tentarIniciar(modo) {
                 if (reader) {
@@ -1670,16 +1679,15 @@
                         if (precoCompra === null) return;
                         precoCompra = parseFloat(precoCompra.replace(',', '.')) || 0;
 
-                        var mercados = getMercados();
-                        var mercado = '';
+                        var mercadoSelecionado = '';
                         if (mercados.length > 0) {
                             var msg = 'Selecione o MERCADO:\n';
                             mercados.forEach((m, i) => msg += (i + 1) + ' - ' + m + '\n');
                             var opcao = prompt(msg + '\nDigite o número correspondente:');
                             if (opcao !== null) {
                                 var idx = parseInt(opcao) - 1;
-                                if (idx >= 0 && idx < mercados.length) mercado = mercados[idx];
-                                else { alert('Opção inválida. Mercado não definido.'); return; }
+                                if (idx >= 0 && idx < mercados.length) mercadoSelecionado = mercados[idx];
+                                else { alert('Opção inválida.'); return; }
                             } else return;
                         } else {
                             alert('Nenhum mercado cadastrado.');
@@ -1690,7 +1698,7 @@
                             codigo: decodedText,
                             nome: nome.trim(),
                             tipo: 'Produto',
-                            mercado: mercado,
+                            mercado: mercadoSelecionado,
                             estoque: qtdInicial,
                             minimo: minimo,
                             preco: precoCompra,
@@ -1740,7 +1748,6 @@
                     document.getElementById('productPrecoMedio').value = existente.precoMedio || '';
                     resultDiv.textContent = '✅ Preenchido!';
                 } else {
-                    // similar ao fluxo acima...
                     alert('Produto não cadastrado. Use o formulário manual.');
                 }
                 setTimeout(fecharLeitorCadastro, 2500);
@@ -1749,7 +1756,7 @@
         }
 
         // ============================================================
-        //  LEITOR COMPRAS (similar aos demais, mas com etapas)
+        //  LEITOR COMPRAS (resumido)
         // ============================================================
         function abrirModalCompras() {
             document.getElementById('leitorComprasModal').classList.add('active');
@@ -1823,7 +1830,6 @@
 
         function irParaEtapaMercado() {
             if (!produtoEscaneadoCompra) { alert('Escanear um produto.'); return; }
-            var mercados = getMercados();
             if (!mercados.length) { alert('Cadastre mercados.'); return; }
             var container = document.getElementById('mercadoEscolha');
             container.innerHTML = '';
@@ -1892,7 +1898,7 @@
         }
 
         // ============================================================
-        //  LEITOR NOTINHA (resumido, igual ao original)
+        //  LEITOR NOTINHA (resumido)
         // ============================================================
         function abrirLeitorNotinha() {
             document.getElementById('leitorNotinhaModal').classList.add('active');
@@ -2168,23 +2174,24 @@
 
         // ============================================================
         //  DEMAS FUNÇÕES (estoque, mercados, relatórios, etc.)
-        //  Mantidas do original, apenas ajustadas para chamar renderizarTudo()
         // ============================================================
 
-        // --- MERCADOS ---
-        function getMercados() {
-            return mercados;
-        }
+        // --- MERCADOS (CORRIGIDO) ---
+        function getMercados() { return mercados; }
 
         function adicionarMercado() {
             var input = document.getElementById('inputNovoMercado');
             var nome = input.value.trim();
-            if (!nome) { alert('Digite o nome.'); return; }
-            if (mercados.indexOf(nome) !== -1) { alert('Já existe.'); return; }
+            if (!nome) { alert('Digite o nome do mercado.'); return; }
+            if (mercados.indexOf(nome) !== -1) { alert('Este mercado já existe.'); return; }
             mercados.push(nome);
             salvarDados();
             renderizarMercados();
             input.value = '';
+            document.getElementById('syncStatus').textContent = '✅ Mercado adicionado';
+            setTimeout(() => {
+                document.getElementById('syncStatus').textContent = '✅ Sincronizado';
+            }, 2000);
         }
 
         function removerMercado(nome) {
@@ -2197,7 +2204,7 @@
         function renderizarMercados() {
             var container = document.getElementById('mercadosLista');
             if (!mercados.length) {
-                container.innerHTML = '<span style="color:#94a3b8;font-size:11px;">Nenhum mercado.</span>';
+                container.innerHTML = '<span style="color:#94a3b8;font-size:11px;">Nenhum mercado cadastrado.</span>';
                 return;
             }
             var html = '';
@@ -2220,15 +2227,15 @@
 
             if (!codigo || !nome) { alert('Código e nome são obrigatórios.'); return; }
 
-            var mercado = '';
+            var mercadoSelecionado = '';
             if (mercados.length > 0) {
                 var msg = 'Selecione o mercado:\n';
                 mercados.forEach((m, i) => msg += (i + 1) + ' - ' + m + '\n');
                 var opcao = prompt(msg + '\nDigite o número correspondente:');
                 if (opcao !== null) {
                     var idx = parseInt(opcao) - 1;
-                    if (idx >= 0 && idx < mercados.length) mercado = mercados[idx];
-                    else alert('Opção inválida. Mercado não definido.');
+                    if (idx >= 0 && idx < mercados.length) mercadoSelecionado = mercados[idx];
+                    else { alert('Opção inválida.'); return; }
                 } else return;
             } else {
                 alert('Nenhum mercado cadastrado.');
@@ -2238,9 +2245,29 @@
             var existente = estoque.findIndex(item => item.codigo === codigo);
             if (existente !== -1) {
                 if (!confirm('Atualizar "' + estoque[existente].nome + '"?')) return;
-                estoque[existente] = { codigo, nome, tipo, mercado, estoque: estoqueAtual, minimo, preco, precoMin, precoMedio };
+                estoque[existente] = {
+                    codigo,
+                    nome,
+                    tipo,
+                    mercado: mercadoSelecionado,
+                    estoque: estoqueAtual,
+                    minimo,
+                    preco,
+                    precoMin,
+                    precoMedio
+                };
             } else {
-                estoque.push({ codigo, nome, tipo, mercado, estoque: estoqueAtual, minimo, preco, precoMin, precoMedio });
+                estoque.push({
+                    codigo,
+                    nome,
+                    tipo,
+                    mercado: mercadoSelecionado,
+                    estoque: estoqueAtual,
+                    minimo,
+                    preco,
+                    precoMin,
+                    precoMedio
+                });
             }
             salvarDados();
             limparCampos();
@@ -2521,7 +2548,7 @@
             alert('Faturamento registrado!');
         }
 
-        // --- EXTRATO DE COMPRAS ---
+        // --- EXTRATO ---
         function abrirExtratoCompras() {
             document.getElementById('extratoComprasModal').classList.add('active');
             gerarExtratoCompras();
@@ -2925,6 +2952,47 @@
 
         // Iniciar
         init();
-    </script>
+</script>
+
+<!-- Firebase SDKs como módulos -->
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
+    import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyD7f9Mte-GACY2fcF8q88BCxuuy-r5nzl0",
+        authDomain: "appestoque-b7c6e.firebaseapp.com",
+        projectId: "appestoque-b7c6e",
+        storageBucket: "appestoque-b7c6e.firebasestorage.app",
+        messagingSenderId: "779055449959",
+        appId: "1:779055449959:web:9b7ccd3db615611b7691c2"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    window.firebaseSalvar = async (dados) => {
+        try {
+            await setDoc(doc(db, "banco", "meu_estoque_oficial"), dados);
+            console.log("✅ Backup salvo na nuvem!");
+        } catch (e) {
+            console.error("❌ Erro ao salvar na nuvem: ", e);
+        }
+    };
+
+    window.firebaseCarregar = async () => {
+        try {
+            const docSnap = await getDoc(doc(db, "banco", "meu_estoque_oficial"));
+            if (docSnap.exists()) {
+                console.log("✅ Dados baixados da nuvem!");
+                return docSnap.data();
+            }
+            return null;
+        } catch (e) {
+            console.error("❌ Erro ao buscar da nuvem: ", e);
+            return null;
+        }
+    };
+</script>
 </body>
 </html>
