@@ -2960,12 +2960,12 @@
     import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 
     const firebaseConfig = {
-        apiKey: "AIzaSyD7f9Mte-GACY2fcF8q88BCxuuy-r5nzl0",
-        authDomain: "appestoque-b7c6e.firebaseapp.com",
-        projectId: "appestoque-b7c6e",
-        storageBucket: "appestoque-b7c6e.firebasestorage.app",
-        messagingSenderId: "779055449959",
-        appId: "1:779055449959:web:9b7ccd3db615611b7691c2"
+     apiKey:"AIzaSyD7f9Mte-GACY2fcF8q88BCxuuy-r5nzl0",
+        authDomain:"appestoque-b7c6e.firebaseapp.com",
+        projectId:"appestoque-b7c6e",
+  storageBucket:"appestoque-b7c6.firebasestorage.app,
+        messagingSenderId:"779055449959",
+        appId:"1:779055449959:web:9b7ccd3db615611b7691c2"
     };
 
     const app = initializeApp(firebaseConfig);
@@ -2976,7 +2976,7 @@
             await setDoc(doc(db, "banco", "meu_estoque_oficial"), dados);
             console.log("✅ Backup salvo na nuvem!");
         } catch (e) {
-            console.error("❌ Erro ao salvar na nuvem: ", e);
+            console.error("❌ Erro ao salvar na nuvem:",e);
         }
     };
 
