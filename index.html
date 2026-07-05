@@ -64,6 +64,7 @@
             display: flex;
             gap: 6px;
             flex-wrap: wrap;
+            align-items: center;
         }
         .btn {
             padding: 3px 8px;
@@ -95,6 +96,28 @@
         .btn-extrato { background: #1e40af; color: #fff; }
         .btn-flash { background: #fbbf24; color: #0f172a; }
         .btn-flash.on { background: #16a34a; color: #fff; }
+        .btn-uso { background: #dc2626; color: #fff; }
+        /* ===== BOTÃO REGISTRAR USO (DESTAQUE) ===== */
+        .btn-uso-header {
+            background: #dc2626;
+            color: #fff;
+            font-size: 15px;
+            font-weight: 800;
+            padding: 8px 20px;
+            border-radius: 8px;
+            border: 2px solid #b91c1c;
+            box-shadow: 0 2px 8px rgba(220, 38, 38, 0.4);
+            letter-spacing: 0.5px;
+            transition: 0.2s;
+        }
+        .btn-uso-header:hover {
+            background: #b91c1c;
+            transform: scale(1.03);
+            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.6);
+        }
+        .btn-uso-header:active {
+            transform: scale(0.97);
+        }
 
         .btn-ler-codigo {
             background: linear-gradient(135deg, #8b5cf6, #6d28d9);
@@ -385,7 +408,8 @@
 
         #barcode-reader-cadastro,
         #barcode-reader-compras,
-        #barcode-reader-notinha {
+        #barcode-reader-notinha,
+        #barcode-reader-uso {
             width: 100%;
             margin-top: 4px;
             min-height: 180px;
@@ -401,7 +425,8 @@
         }
         #barcode-reader-cadastro video,
         #barcode-reader-compras video,
-        #barcode-reader-notinha video {
+        #barcode-reader-notinha video,
+        #barcode-reader-uso video {
             border-radius: 8px;
             max-height: 35vh;
             width: 100%;
@@ -481,6 +506,25 @@
             height: 30px;
         }
         .modal-dados-compra .btn { height: 30px; font-size: 12px; padding: 4px 12px; }
+
+        /* Estilos do modal de consumo */
+        .modal-dados-consumo {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-top: 6px;
+            align-items: center;
+        }
+        .modal-dados-consumo input {
+            flex: 1;
+            padding: 4px 8px;
+            border: 1px solid #d1d9e6;
+            border-radius: 4px;
+            font-size: 12px;
+            min-width: 60px;
+            height: 30px;
+        }
+        .modal-dados-consumo .btn { height: 30px; font-size: 12px; padding: 4px 12px; }
 
         .nav-mes {
             display: flex;
@@ -741,6 +785,7 @@
             .header-left h1 small { font-size: 9px; }
             .btn { font-size: 10px; padding: 2px 6px; }
             .btn-header { padding: 5px 12px; font-size: 12px; }
+            .btn-uso-header { font-size: 13px; padding: 6px 14px; }
             .card-fat { padding: 6px 8px; min-width: 80px; }
             .card-fat .value { font-size: 16px; }
             .form-row .form-group { min-width: 50px; }
@@ -751,6 +796,7 @@
             .btn-ler-codigo, .btn-salvar-produto, .btn-scan-buy, .btn-notinha-scan { font-size: 11px; padding: 5px 10px; }
             .modal-box { padding: 8px; max-width: 100%; }
             .modal-dados-compra input { height: 28px; font-size: 11px; }
+            .modal-dados-consumo input { height: 28px; font-size: 11px; }
             .btn-proxima-etapa { font-size: 11px; padding: 4px 10px; height: 24px; }
             .mercado-escolha .btn-mercado { font-size: 10px; padding: 3px 8px; min-width: 50px; }
             .etapa-produto-info .nome { font-size: 13px; }
@@ -772,6 +818,7 @@
             th, td { padding: 2px 3px; }
             .btn { font-size: 9px; padding: 1px 4px; }
             .btn-header { padding: 4px 10px; font-size: 11px; }
+            .btn-uso-header { font-size: 11px; padding: 4px 10px; }
             .header-left h1 { font-size: 12px; }
             .modal-box { padding: 6px; }
             .cardapio-grid { grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); }
@@ -799,6 +846,7 @@
                 </h1>
             </div>
             <div class="btn-group">
+                <button class="btn-uso-header" onclick="abrirLeitorUso()">📤 Registrar Uso</button>
                 <button class="btn btn-extrato btn-header" onclick="abrirExtratoCompras()">📄 Extrato</button>
                 <button class="btn btn-cardapio btn-header" onclick="abrirCardapio()">📋 Cardápio</button>
                 <button class="btn btn-primary btn-header" onclick="abrirRelatorioMercados()">📊 Mercados</button>
@@ -849,7 +897,7 @@
                     <input type="number" id="productMin" step="1" placeholder="0">
                 </div>
                 <div class="form-group price">
-                    <label>Venda R$</label>
+                    <label>Preço Pago R$</label>
                     <input type="number" id="productPrice" step="0.01" placeholder="0,00">
                 </div>
                 <div class="form-group price">
@@ -882,7 +930,7 @@
                             <th>Mercado</th>
                             <th>Qtd</th>
                             <th>Mín</th>
-                            <th>Venda</th>
+                            <th>Preço Pago</th>
                             <th>Mín R$</th>
                             <th>Méd R$</th>
                             <th>Status</th>
@@ -939,9 +987,9 @@
             </div>
         </div>
 
-        <!-- ===== SEÇÃO CARRINHO ===== -->
+        <!-- ===== SEÇÃO CARRINHO / MOVIMENTAÇÕES ===== -->
         <div class="section">
-            <div class="section-title">🛒 Carrinho de Compras</div>
+            <div class="section-title">🛒 Movimentações</div>
             <button class="btn-scan-buy" onclick="abrirModalCompras()">📥 Escanear para Comprar</button>
             <button class="btn-notinha-scan" onclick="abrirLeitorNotinha()">🧾 Escanear Notinha</button>
             <div id="cartContainer">
@@ -1042,6 +1090,40 @@
                 <button class="btn btn-primary btn-sm" style="margin-top:4px; width:100%;" onclick="processarNotinhaManual()">📥 Processar</button>
             </div>
             <div id="notinhaResumo" class="notinha-resumo" style="display:none;"></div>
+        </div>
+    </div>
+
+    <!-- Leitor Uso -->
+    <div class="modal-overlay" id="leitorUsoModal">
+        <div class="modal-box">
+            <button class="close-modal" onclick="fecharLeitorUso()">&times;</button>
+            <h3 style="margin-bottom:6px; font-size:13px;">📤 Registrar Uso (Consumo)</h3>
+            <div id="barcode-reader-uso">
+                <span style="color:#94a3b8; font-size:14px;">Aguardando câmera...</span>
+            </div>
+            <div class="qr-actions">
+                <button class="btn btn-secondary btn-sm" onclick="document.getElementById('barcode-file-input-uso').click()">📁 Upload</button>
+                <input type="file" id="barcode-file-input-uso" accept="image/*" style="display:none;" onchange="uploadImagemUso(event)">
+                <button class="btn btn-flash btn-sm" onclick="toggleFlash('uso')" id="btnFlashUso">🔦 Flash</button>
+                <button class="btn btn-warning btn-sm" onclick="reiniciarLeitorUso()" id="btnReiniciarUso" style="display:none;">🔄 Tentar</button>
+                <button class="btn btn-danger btn-sm" onclick="fecharLeitorUso()">Fechar</button>
+            </div>
+            <div id="leitor-result-uso" style="margin-top:6px; font-weight:600; font-size:12px; color:#dc2626;"></div>
+
+            <div id="etapaUso" class="etapa-container">
+                <div class="etapa-titulo">📦 Produto</div>
+                <div class="etapa-produto-info">
+                    <div class="nome" id="produtoUsoNomeDisplay">-</div>
+                    <div class="codigo" id="produtoUsoCodigoDisplay">Código: -</div>
+                    <div class="estoque" id="produtoUsoEstoqueDisplay">Estoque: 0</div>
+                </div>
+                <div class="modal-dados-consumo">
+                    <label style="font-size:10px; font-weight:600;">Quantidade a consumir:</label>
+                    <input type="number" id="inputQtdUso" step="1" placeholder="Qtd" min="1" value="1">
+                    <button class="btn btn-danger" onclick="confirmarUso()" style="width:100%;">⛔ Confirmar Consumo</button>
+                </div>
+                <button class="btn-proxima-etapa" onclick="fecharLeitorUso()" style="background:#64748b;">Cancelar</button>
+            </div>
         </div>
     </div>
 
@@ -1228,15 +1310,16 @@
         }
 
         // ============================================================
-        //  FLASH (LANTERNA) - CONTROLE MANUAL E AUTOMÁTICO
+        //  FLASH (LANTERNA)
         // ============================================================
-        var flashState = { cadastro: false, compras: false, notinha: false };
+        var flashState = { cadastro: false, compras: false, notinha: false, uso: false };
 
         function toggleFlash(tipo) {
             var reader = null;
             if (tipo === 'cadastro') reader = html5CadastroReader;
             else if (tipo === 'compras') reader = html5ComprasReader;
             else if (tipo === 'notinha') reader = html5NotinhaReader;
+            else if (tipo === 'uso') reader = html5UsoReader;
             if (!reader) {
                 alert('Câmera não está ativa. Inicie o scanner primeiro.');
                 return;
@@ -1265,17 +1348,15 @@
 
         function ligarFlashAutomatico(tipo, reader) {
             if (!reader) return;
-            // Tenta ligar o flash automaticamente (sem feedback de erro)
             try {
                 reader.toggleFlash().then(function() {
                     flashState[tipo] = true;
                     atualizarBotaoFlash(tipo);
                 }).catch(function(e) {
-                    // Falha silenciosa - apenas ignora
                     flashState[tipo] = false;
                 });
             } catch (e) {
-                // Falha silenciosa
+                flashState[tipo] = false;
             }
         }
 
@@ -1285,10 +1366,12 @@
         var estoque = [],
             carrinho = [],
             vendas = [],
-            produtoEscaneadoCompra = null;
+            produtoEscaneadoCompra = null,
+            produtoEscaneadoUso = null;
         var html5CadastroReader = null,
             html5ComprasReader = null,
-            html5NotinhaReader = null;
+            html5NotinhaReader = null,
+            html5UsoReader = null;
 
         // ============================================================
         //  GESTÃO DE DADOS (LOCALSTORAGE)
@@ -1936,7 +2019,44 @@
         }
 
         // ============================================================
-        //  LEITOR DE QR CODE (GERAL) - COM RETORNO DO LEITOR
+        //  CONSUMO (USO) - DESCONTA DO ESTOQUE
+        // ============================================================
+        function consumirProduto(codigo, quantidade, descricao) {
+            var idx = estoque.findIndex(function(p) { return p.codigo === codigo; });
+            if (idx === -1) {
+                alert('Produto não cadastrado.');
+                return false;
+            }
+            if (estoque[idx].estoque < quantidade) {
+                alert('Estoque insuficiente! Disponível: ' + estoque[idx].estoque);
+                return false;
+            }
+            estoque[idx].estoque -= quantidade;
+            var agora = new Date();
+            var data = agora.toLocaleDateString('pt-BR');
+            var hora = agora.toLocaleTimeString('pt-BR');
+            vendas.push({
+                data: data,
+                dataHora: data + ' ' + hora,
+                codigo: codigo,
+                nome: estoque[idx].nome,
+                quantidade: quantidade,
+                mercado: 'Consumo',
+                precoUnitario: 0,
+                total: 0,
+                tipo: 'CONSUMO',
+                descricao: descricao || 'Uso registrado'
+            });
+            salvarDados();
+            renderizarEstoque();
+            calcularFaltantes();
+            atualizarAlertas();
+            alert('Consumo registrado! Estoque de "' + estoque[idx].nome + '" atualizado.');
+            return true;
+        }
+
+        // ============================================================
+        //  LEITOR DE QR CODE (GERAL)
         // ============================================================
         function iniciarLeitor(containerId, resultDivId, onSuccess) {
             var container = document.getElementById(containerId);
@@ -2011,14 +2131,13 @@
         }
 
         // ============================================================
-        //  LEITOR CADASTRO
+        //  LEITOR CADASTRO (com todos os campos - CORRIGIDO)
         // ============================================================
         function abrirLeitorCadastro() {
             var modal = document.getElementById('leitorCadastroModal');
             modal.classList.add('active');
             var resultDiv = document.getElementById('leitor-result-cadastro');
             resultDiv.textContent = '';
-            // Reset flash button
             var btnFlash = document.getElementById('btnFlashCadastro');
             btnFlash.textContent = '🔦 Flash';
             btnFlash.className = 'btn btn-flash btn-sm';
@@ -2045,25 +2164,34 @@
                     document.getElementById('productPrecoMedio').value = existente.precoMedio || '';
                     resultDiv.textContent = '✅ Preenchido!';
                 } else {
-                    var nome = prompt('Novo produto. Nome:');
+                    var nome = prompt('Digite o NOME do produto:');
                     if (nome && nome.trim()) {
-                        var minimo = prompt('Quantidade mínima (estoque mínimo):');
+                        var qtdInicial = prompt('Quantidade INICIAL em estoque:');
+                        if (qtdInicial === null) return;
+                        qtdInicial = parseInt(qtdInicial) || 0;
+
+                        var minimo = prompt('Quantidade MÍNIMA (estoque mínimo):');
                         if (minimo === null) return;
                         minimo = parseInt(minimo) || 0;
-                        var precoVenda = prompt('Preço de venda (R$):');
-                        if (precoVenda === null) return;
-                        precoVenda = parseFloat(precoVenda.replace(',', '.')) || 0;
+
+                        var precoCompra = prompt('Preço de COMPRA (R$):');
+                        if (precoCompra === null) return;
+                        precoCompra = parseFloat(precoCompra.replace(',', '.')) || 0;
 
                         var mercados = getMercados();
                         var mercado = '';
                         if (mercados.length > 0) {
-                            var msg = 'Selecione o mercado:\n';
+                            var msg = 'Selecione o MERCADO:\n';
                             mercados.forEach(function(m, i) { msg += (i + 1) + ' - ' + m + '\n'; });
                             var opcao = prompt(msg + '\nDigite o número correspondente:');
                             if (opcao !== null) {
                                 var idx = parseInt(opcao) - 1;
-                                if (idx >= 0 && idx < mercados.length) mercado = mercados[idx];
-                                else { alert('Opção inválida. Mercado não definido.'); return; }
+                                if (idx >= 0 && idx < mercados.length) {
+                                    mercado = mercados[idx];
+                                } else {
+                                    alert('Opção inválida. Mercado não definido.');
+                                    return;
+                                }
                             } else { return; }
                         } else {
                             alert('Nenhum mercado cadastrado. Adicione um mercado primeiro.');
@@ -2075,9 +2203,9 @@
                             nome: nome.trim(),
                             tipo: 'Produto',
                             mercado: mercado,
-                            estoque: 0,
+                            estoque: qtdInicial,
                             minimo: minimo,
-                            preco: precoVenda,
+                            preco: precoCompra,
                             precoMin: 0,
                             precoMedio: 0
                         });
@@ -2088,14 +2216,15 @@
 
                         document.getElementById('productName').value = nome.trim();
                         document.getElementById('productTipo').value = 'Produto';
-                        document.getElementById('productStock').value = 0;
+                        document.getElementById('productStock').value = qtdInicial;
                         document.getElementById('productMin').value = minimo;
-                        document.getElementById('productPrice').value = precoVenda;
+                        document.getElementById('productPrice').value = precoCompra;
                         document.getElementById('productPrecoMin').value = '';
                         document.getElementById('productPrecoMedio').value = '';
 
-                        resultDiv.textContent = '✅ Produto salvo! (mín: ' + minimo + ', preço: R$ ' + precoVenda
-                            .toFixed(2).replace('.', ',') + ', mercado: ' + mercado + ')';
+                        resultDiv.textContent = '✅ Produto salvo! (estoque: ' + qtdInicial +
+                            ', mín: ' + minimo + ', preço de compra: R$ ' + precoCompra.toFixed(2).replace('.', ',') +
+                            ', mercado: ' + mercado + ')';
                     } else {
                         resultDiv.textContent = '⚠️ Cadastro cancelado.';
                     }
@@ -2104,7 +2233,6 @@
             }
 
             html5CadastroReader = iniciarLeitor('barcode-reader-cadastro', 'leitor-result-cadastro', onSuccess);
-            // Tenta ligar o flash automaticamente após iniciar
             if (html5CadastroReader) {
                 setTimeout(function() {
                     ligarFlashAutomatico('cadastro', html5CadastroReader);
@@ -2146,19 +2274,24 @@
                         document.getElementById('productPrecoMedio').value = existente.precoMedio || '';
                         resultDiv.textContent = '✅ Preenchido!';
                     } else {
-                        var nome = prompt('Novo produto. Nome:');
+                        var nome = prompt('Digite o NOME do produto:');
                         if (nome && nome.trim()) {
-                            var minimo = prompt('Quantidade mínima (estoque mínimo):');
+                            var qtdInicial = prompt('Quantidade INICIAL em estoque:');
+                            if (qtdInicial === null) return;
+                            qtdInicial = parseInt(qtdInicial) || 0;
+
+                            var minimo = prompt('Quantidade MÍNIMA (estoque mínimo):');
                             if (minimo === null) return;
                             minimo = parseInt(minimo) || 0;
-                            var precoVenda = prompt('Preço de venda (R$):');
-                            if (precoVenda === null) return;
-                            precoVenda = parseFloat(precoVenda.replace(',', '.')) || 0;
+
+                            var precoCompra = prompt('Preço de COMPRA (R$):');
+                            if (precoCompra === null) return;
+                            precoCompra = parseFloat(precoCompra.replace(',', '.')) || 0;
 
                             var mercados = getMercados();
                             var mercado = '';
                             if (mercados.length > 0) {
-                                var msg = 'Selecione o mercado:\n';
+                                var msg = 'Selecione o MERCADO:\n';
                                 mercados.forEach(function(m, i) { msg += (i + 1) + ' - ' + m + '\n'; });
                                 var opcao = prompt(msg + '\nDigite o número correspondente:');
                                 if (opcao !== null) {
@@ -2176,9 +2309,9 @@
                                 nome: nome.trim(),
                                 tipo: 'Produto',
                                 mercado: mercado,
-                                estoque: 0,
+                                estoque: qtdInicial,
                                 minimo: minimo,
-                                preco: precoVenda,
+                                preco: precoCompra,
                                 precoMin: 0,
                                 precoMedio: 0
                             });
@@ -2189,14 +2322,15 @@
 
                             document.getElementById('productName').value = nome.trim();
                             document.getElementById('productTipo').value = 'Produto';
-                            document.getElementById('productStock').value = 0;
+                            document.getElementById('productStock').value = qtdInicial;
                             document.getElementById('productMin').value = minimo;
-                            document.getElementById('productPrice').value = precoVenda;
+                            document.getElementById('productPrice').value = precoCompra;
                             document.getElementById('productPrecoMin').value = '';
                             document.getElementById('productPrecoMedio').value = '';
 
-                            resultDiv.textContent = '✅ Produto salvo! (mín: ' + minimo + ', preço: R$ ' + precoVenda
-                                .toFixed(2).replace('.', ',') + ', mercado: ' + mercado + ')';
+                            resultDiv.textContent = '✅ Produto salvo! (estoque: ' + qtdInicial +
+                                ', mín: ' + minimo + ', preço de compra: R$ ' + precoCompra.toFixed(2).replace('.', ',') +
+                                ', mercado: ' + mercado + ')';
                         } else {
                             resultDiv.textContent = '⚠️ Cadastro cancelado.';
                         }
@@ -2516,6 +2650,119 @@
         }
 
         // ============================================================
+        //  LEITOR DE USO (CONSUMO)
+        // ============================================================
+        function abrirLeitorUso() {
+            document.getElementById('leitorUsoModal').classList.add('active');
+            produtoEscaneadoUso = null;
+            document.getElementById('etapaUso').classList.remove('ativa');
+            document.getElementById('leitor-result-uso').textContent = '';
+            document.getElementById('inputQtdUso').value = '1';
+
+            var btnFlash = document.getElementById('btnFlashUso');
+            btnFlash.textContent = '🔦 Flash';
+            btnFlash.className = 'btn btn-flash btn-sm';
+            flashState.uso = false;
+
+            if (html5UsoReader) {
+                try {
+                    html5UsoReader.stop();
+                    html5UsoReader.clear();
+                } catch (e) {}
+                html5UsoReader = null;
+            }
+
+            function onSuccess(decodedText) {
+                var produto = estoque.find(function(item) { return item.codigo === decodedText; });
+                if (!produto) {
+                    alert('Produto não cadastrado.');
+                    return;
+                }
+                if (produto.tipo === 'Utensílio') {
+                    alert('Este item é um utensílio, não pode ser consumido.');
+                    return;
+                }
+                produtoEscaneadoUso = produto;
+                document.getElementById('produtoUsoNomeDisplay').textContent = produto.nome;
+                document.getElementById('produtoUsoCodigoDisplay').textContent = 'Código: ' + produto.codigo;
+                document.getElementById('produtoUsoEstoqueDisplay').textContent = 'Estoque: ' + produto.estoque;
+                document.getElementById('leitor-result-uso').textContent = '✅ Produto encontrado!';
+                document.getElementById('etapaUso').classList.add('ativa');
+            }
+
+            html5UsoReader = iniciarLeitor('barcode-reader-uso', 'leitor-result-uso', onSuccess);
+            if (html5UsoReader) {
+                setTimeout(function() {
+                    ligarFlashAutomatico('uso', html5UsoReader);
+                }, 500);
+            }
+        }
+
+        function fecharLeitorUso() {
+            document.getElementById('leitorUsoModal').classList.remove('active');
+            if (html5UsoReader) {
+                try {
+                    html5UsoReader.stop();
+                    html5UsoReader.clear();
+                } catch (e) {}
+                html5UsoReader = null;
+            }
+            produtoEscaneadoUso = null;
+            flashState.uso = false;
+        }
+
+        function reiniciarLeitorUso() { abrirLeitorUso(); }
+
+        function uploadImagemUso(event) {
+            var file = event.target.files[0];
+            if (!file) return;
+            var resultDiv = document.getElementById('leitor-result-uso');
+            var reader = new Html5Qrcode('barcode-reader-uso');
+            reader.scanFile(file, true)
+                .then(function(decoded) {
+                    tocarBeep();
+                    var produto = estoque.find(function(item) { return item.codigo === decoded; });
+                    if (!produto) {
+                        alert('Produto não cadastrado.');
+                        return;
+                    }
+                    if (produto.tipo === 'Utensílio') {
+                        alert('Este item é um utensílio, não pode ser consumido.');
+                        return;
+                    }
+                    produtoEscaneadoUso = produto;
+                    document.getElementById('produtoUsoNomeDisplay').textContent = produto.nome;
+                    document.getElementById('produtoUsoCodigoDisplay').textContent = 'Código: ' + produto.codigo;
+                    document.getElementById('produtoUsoEstoqueDisplay').textContent = 'Estoque: ' + produto.estoque;
+                    resultDiv.textContent = '✅ Produto encontrado!';
+                    document.getElementById('etapaUso').classList.add('ativa');
+                })
+                .catch(function() { alert('Erro ao ler imagem.'); });
+            event.target.value = '';
+        }
+
+        function confirmarUso() {
+            if (!produtoEscaneadoUso) {
+                alert('Escanear um produto primeiro.');
+                return;
+            }
+            var qtd = parseInt(document.getElementById('inputQtdUso').value);
+            if (isNaN(qtd) || qtd <= 0) {
+                alert('Quantidade inválida.');
+                return;
+            }
+            if (produtoEscaneadoUso.estoque < qtd) {
+                alert('Estoque insuficiente! Disponível: ' + produtoEscaneadoUso.estoque);
+                return;
+            }
+            var descricao = prompt('Motivo do consumo (opcional):') || 'Uso registrado';
+            if (consumirProduto(produtoEscaneadoUso.codigo, qtd, descricao)) {
+                document.getElementById('leitor-result-uso').textContent = '✅ Consumo registrado!';
+                setTimeout(fecharLeitorUso, 1500);
+            }
+        }
+
+        // ============================================================
         //  MERCADOS
         // ============================================================
         function adicionarMercado() {
@@ -2794,6 +3041,8 @@
                     confirmarCompra(); }
                 if (active.id === 'textoNotinha') { e.preventDefault();
                     processarNotinhaManual(); }
+                if (active.id === 'inputQtdUso') { e.preventDefault();
+                    confirmarUso(); }
             }
         });
 
@@ -2808,6 +3057,28 @@
 
         // Iniciar
         init();
-    </script>
+<script type="module">
+  // Import the functions you need from the SDKs you need
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
+
+  // Your web app's Firebase configuration
+  const firebaseConfig = {
+    apiKey: "AIzaSyD7f9Mte-GACY2fcF8q88BCxuuy-r5nzl0",
+    authDomain: "appestoque-b7c6e.firebaseapp.com",
+    projectId: "appestoque-b7c6e",
+    storageBucket: "appestoque-b7c6e.firebasestorage.app",
+    messagingSenderId: "779055449959",
+    appId: "1:779055449959:web:9b7ccd3db615611b7691c2"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+</script>
+</script>
+<script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js"></script>
+
 </body>
 </html>
