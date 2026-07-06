@@ -5,11 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Estoque + Faturamento</title>
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-    <!-- Firebase compat -->
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <style>
-        /* ===== ESTILOS (compactos, mantidos) ===== */
+        /* ===== ESTILOS ORIGINAIS (COMPACTOS) ===== */
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
         html, body {
             width: 100%;
@@ -46,13 +43,17 @@
             align-items: center;
             gap: 4px;
         }
-        .header-left h1:hover { color: #2563eb; }
+        .header-left h1:hover {
+            color: #2563eb;
+        }
         .header-left h1 .edit-icon {
             font-size: 12px;
             opacity: 0.5;
             transition: 0.2s;
         }
-        .header-left h1:hover .edit-icon { opacity: 1; }
+        .header-left h1:hover .edit-icon {
+            opacity: 1;
+        }
         .header-left h1 small {
             font-size: 10px;
             font-weight: 400;
@@ -95,6 +96,8 @@
         .btn-extrato { background: #1e40af; color: #fff; }
         .btn-flash { background: #fbbf24; color: #0f172a; }
         .btn-flash.on { background: #16a34a; color: #fff; }
+        .btn-uso { background: #dc2626; color: #fff; }
+        /* ===== BOTÃO REGISTRAR USO (DESTAQUE) ===== */
         .btn-uso-header {
             background: #dc2626;
             color: #fff;
@@ -112,7 +115,9 @@
             transform: scale(1.03);
             box-shadow: 0 4px 12px rgba(220, 38, 38, 0.6);
         }
-        .btn-uso-header:active { transform: scale(0.97); }
+        .btn-uso-header:active {
+            transform: scale(0.97);
+        }
 
         .btn-ler-codigo {
             background: linear-gradient(135deg, #8b5cf6, #6d28d9);
@@ -275,8 +280,12 @@
             border-color: transparent;
             background: #fff;
         }
-        .form-row .form-group.price { min-width: 50px; }
-        .form-row .form-group.price input { width: 60px; }
+        .form-row .form-group.price {
+            min-width: 50px;
+        }
+        .form-row .form-group.price input {
+            width: 60px;
+        }
 
         .flex-row {
             display: flex;
@@ -362,6 +371,17 @@
             align-items: center;
         }
         .cart-item .info .qtd { font-weight: 600; }
+        .cart-total {
+            text-align: right;
+            font-weight: 700;
+            font-size: 13px;
+            padding: 6px 8px;
+            background: #f8fafc;
+            border-radius: 4px;
+            margin-top: 4px;
+            border-top: 2px solid #0f3b5e;
+            color: #0f3b5e;
+        }
 
         .modal-overlay {
             display: none;
@@ -498,6 +518,7 @@
         }
         .modal-dados-compra .btn { height: 30px; font-size: 12px; padding: 4px 12px; }
 
+        /* Estilos do modal de consumo */
         .modal-dados-consumo {
             display: flex;
             gap: 6px;
@@ -634,6 +655,7 @@
         .btn-acao-editar { background: #dbeafe; color: #1d4ed8; }
         .btn-acao-excluir { background: #fee2e2; color: #dc2626; }
 
+        /* ===== ESTILOS DO RELATÓRIO DE MERCADOS ===== */
         .mercado-relatorio .comparacao-item {
             display: flex;
             justify-content: space-between;
@@ -676,6 +698,7 @@
             padding: 0 8px;
         }
 
+        /* ===== ESTILOS DO CARDÁPIO ===== */
         .cardapio-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
@@ -717,6 +740,7 @@
             margin-bottom: 8px;
         }
 
+        /* ===== ESTILOS PARA NOTINHA ===== */
         .notinha-resumo {
             background: #f8fafc;
             border-radius: 6px;
@@ -734,6 +758,7 @@
         .notinha-resumo .item-linha.adicionado { color: #16a34a; }
         .notinha-resumo .item-linha.ignorado { color: #94a3b8; text-decoration: line-through; }
 
+        /* ===== ESTILOS DO EXTRATO DE COMPRAS ===== */
         .extrato-item {
             border-bottom: 1px solid #e2e8f0;
             padding: 6px 0;
@@ -763,12 +788,6 @@
             margin-top: 8px;
             padding-top: 6px;
             border-top: 2px solid #0f3b5e;
-        }
-
-        #syncStatus {
-            font-size: 11px;
-            margin-left: 8px;
-            font-weight: 600;
         }
 
         @media (max-width: 640px) {
@@ -836,7 +855,6 @@
                     <span class="edit-icon">✎</span>
                     <small id="tituloSubtitulo">clique para editar</small>
                 </h1>
-                <span id="syncStatus">⏳ Sincronizando...</span>
             </div>
             <div class="btn-group">
                 <button class="btn-uso-header" onclick="abrirLeitorUso()">📤 Registrar Uso</button>
@@ -1227,232 +1245,39 @@
 
     <script>
         // ============================================================
-        //  FIREBASE CONFIG (opcional, mas mantido)
+        //  SERVICE WORKER HÍBRIDO (OFFLINE + ONLINE)
         // ============================================================
-        const firebaseConfig = {
-            apiKey: "AIzaSyD7f9Mte-GACY2fcF8q88BCxuuy-r5nzl0",
-            authDomain: "appestoque-b7c6e.firebaseapp.com",
-            projectId: "appestoque-b7c6e",
-            storageBucket: "appestoque-b7c6e.firebasestorage.app",
-            messagingSenderId: "779055449959",
-            appId: "1:779055449959:web:9b7ccd3db615611b7691c2"
-        };
-
-        let db = null;
-        if (typeof firebase !== 'undefined' && firebase.initializeApp) {
-            try {
-                firebase.initializeApp(firebaseConfig);
-                db = firebase.firestore();
-                console.log('🔥 Firebase conectado');
-            } catch (e) {
-                console.warn('Firebase já inicializado ou erro:', e);
-            }
-        }
-
-        // ============================================================
-        //  ESTADO GLOBAL
-        // ============================================================
-        let estoque = [];
-        let carrinho = [];
-        let vendas = [];
-        let mercados = ['Extra', 'Atacadão', 'Mercado Livre'];
-        let cardapioFotos = [];
-        let syncInProgress = false;
-
-        let html5CadastroReader = null,
-            html5ComprasReader = null,
-            html5NotinhaReader = null,
-            html5UsoReader = null;
-        let produtoEscaneadoCompra = null,
-            produtoEscaneadoUso = null;
-        let flashState = { cadastro: false, compras: false, notinha: false, uso: false };
-
-        // ============================================================
-        //  FUNÇÕES DE SINCRONIZAÇÃO (FIRESTORE + LOCALSTORAGE)
-        // ============================================================
-        async function carregarDadosDoFirestore() {
-            try {
-                if (!db) throw new Error('Firestore não disponível');
-
-                // Carrega estoque
-                const estoqueSnap = await db.collection('estoque').get();
-                let estoqueFirestore = [];
-                estoqueSnap.forEach(doc => {
-                    estoqueFirestore.push({ id: doc.id, ...doc.data() });
+        if ('serviceWorker' in navigator) {
+            var swCode = `
+                self.addEventListener('install', function(e) {
+                    e.waitUntil(
+                        caches.open('estoque-app-v1')
+                        .then(function(cache) {
+                            return cache.addAll([
+                                '/',
+                                'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js'
+                            ]);
+                        })
+                    );
                 });
-
-                // Carrega vendas
-                const vendasSnap = await db.collection('vendas').get();
-                let vendasFirestore = [];
-                vendasSnap.forEach(doc => {
-                    vendasFirestore.push({ id: doc.id, ...doc.data() });
+                self.addEventListener('fetch', function(e) {
+                    e.respondWith(
+                        caches.match(e.request)
+                        .then(function(response) {
+                            return response || fetch(e.request);
+                        })
+                    );
                 });
-
-                // Carrega carrinho
-                const carrinhoSnap = await db.collection('carrinho').doc('lista').get();
-                let carrinhoFirestore = [];
-                if (carrinhoSnap.exists) {
-                    carrinhoFirestore = carrinhoSnap.data().itens || [];
-                }
-
-                // Carrega mercados
-                const mercadosSnap = await db.collection('config').doc('mercados').get();
-                let mercadosFirestore = ['Extra', 'Atacadão', 'Mercado Livre'];
-                if (mercadosSnap.exists) {
-                    mercadosFirestore = mercadosSnap.data().lista || ['Extra', 'Atacadão', 'Mercado Livre'];
-                }
-
-                // Carrega cardápio
-                const cardapioSnap = await db.collection('cardapio').get();
-                let cardapioFirestore = [];
-                cardapioSnap.forEach(doc => {
-                    cardapioFirestore.push({ id: doc.id, ...doc.data() });
+            `;
+            var blob = new Blob([swCode], { type: 'application/javascript' });
+            var swUrl = URL.createObjectURL(blob);
+            navigator.serviceWorker.register(swUrl)
+                .then(function() {
+                    console.log('✅ Service Worker registrado. App híbrido (offline/online) ativo.');
+                })
+                .catch(function() {
+                    console.warn('⚠️ Service Worker não registrado. Modo offline pode não funcionar.');
                 });
-
-                // ===== DECISÃO: usar Firestore ou localStorage =====
-                // Se o Firestore tiver dados (estoque não vazio), usar Firestore.
-                // Senão, tentar carregar do localStorage e depois migrar.
-                if (estoqueFirestore.length > 0) {
-                    estoque = estoqueFirestore;
-                    vendas = vendasFirestore;
-                    carrinho = carrinhoFirestore;
-                    mercados = mercadosFirestore;
-                    cardapioFotos = cardapioFirestore;
-                } else {
-                    // Fallback para localStorage
-                    const localData = localStorage.getItem('estoqueApp');
-                    if (localData) {
-                        const parsed = JSON.parse(localData);
-                        estoque = parsed.estoque || [];
-                        vendas = parsed.vendas || [];
-                        carrinho = parsed.carrinho || [];
-                        mercados = parsed.mercados || ['Extra', 'Atacadão', 'Mercado Livre'];
-                        // Migra para Firestore
-                        await salvarDadosNoFirestore();
-                        localStorage.removeItem('estoqueApp');
-                    } else {
-                        // Inicializa com padrão
-                        estoque = [];
-                        vendas = [];
-                        carrinho = [];
-                        mercados = ['Extra', 'Atacadão', 'Mercado Livre'];
-                    }
-                    const localCardapio = localStorage.getItem('cardapioApp');
-                    if (localCardapio) {
-                        cardapioFotos = JSON.parse(localCardapio);
-                        // Migra para Firestore
-                        await salvarDadosNoFirestore();
-                        localStorage.removeItem('cardapioApp');
-                    } else {
-                        cardapioFotos = [];
-                    }
-                }
-
-                // Atualiza interface
-                renderizarTudo();
-                document.getElementById('syncStatus').textContent = '✅ Sincronizado';
-                document.getElementById('syncStatus').style.color = '#16a34a';
-            } catch (error) {
-                console.error('Erro ao carregar Firestore:', error);
-                carregarDadosLocal();
-                document.getElementById('syncStatus').textContent = '⚠️ Offline (dados locais)';
-                document.getElementById('syncStatus').style.color = '#f59e0b';
-            }
-        }
-
-        async function salvarDadosNoFirestore() {
-            if (syncInProgress || !db) return;
-            syncInProgress = true;
-            try {
-                const batch = db.batch();
-
-                // Limpa e recria estoque
-                const snapEst = await db.collection('estoque').get();
-                snapEst.forEach(doc => batch.delete(doc.ref));
-                estoque.forEach(item => {
-                    const ref = db.collection('estoque').doc();
-                    batch.set(ref, item);
-                });
-
-                // Limpa e recria vendas
-                const snapVen = await db.collection('vendas').get();
-                snapVen.forEach(doc => batch.delete(doc.ref));
-                vendas.forEach(item => {
-                    const ref = db.collection('vendas').doc();
-                    batch.set(ref, item);
-                });
-
-                // Carrinho
-                const carrinhoRef = db.collection('carrinho').doc('lista');
-                batch.set(carrinhoRef, { itens: carrinho });
-
-                // Mercados
-                const mercadosRef = db.collection('config').doc('mercados');
-                batch.set(mercadosRef, { lista: mercados });
-
-                // Cardápio
-                const snapCard = await db.collection('cardapio').get();
-                snapCard.forEach(doc => batch.delete(doc.ref));
-                cardapioFotos.forEach(item => {
-                    const ref = db.collection('cardapio').doc();
-                    batch.set(ref, item);
-                });
-
-                await batch.commit();
-
-                // Cache local
-                salvarDadosLocal();
-
-                document.getElementById('syncStatus').textContent = '✅ Sincronizado';
-                document.getElementById('syncStatus').style.color = '#16a34a';
-            } catch (error) {
-                console.error('Erro ao salvar no Firestore:', error);
-                salvarDadosLocal();
-                document.getElementById('syncStatus').textContent = '⚠️ Offline (salvo localmente)';
-                document.getElementById('syncStatus').style.color = '#f59e0b';
-            }
-            syncInProgress = false;
-        }
-
-        function carregarDadosLocal() {
-            const data = localStorage.getItem('estoqueApp');
-            if (data) {
-                const parsed = JSON.parse(data);
-                estoque = parsed.estoque || [];
-                carrinho = parsed.carrinho || [];
-                vendas = parsed.vendas || [];
-                mercados = parsed.mercados || ['Extra', 'Atacadão', 'Mercado Livre'];
-            }
-            const cardapio = localStorage.getItem('cardapioApp');
-            if (cardapio) {
-                cardapioFotos = JSON.parse(cardapio);
-            }
-            renderizarTudo();
-        }
-
-        function salvarDadosLocal() {
-            localStorage.setItem('estoqueApp', JSON.stringify({
-                estoque,
-                carrinho,
-                vendas,
-                mercados
-            }));
-            localStorage.setItem('cardapioApp', JSON.stringify(cardapioFotos));
-        }
-
-        function salvarDados() {
-            salvarDadosLocal();
-            salvarDadosNoFirestore();
-        }
-
-        function renderizarTudo() {
-            renderizarEstoque();
-            renderizarCarrinho();
-            renderizarMercados();
-            atualizarFaturamentoHoje();
-            atualizarAlertas();
-            renderizarUtensilios();
-            renderizarCardapio();
         }
 
         // ============================================================
@@ -1496,10 +1321,12 @@
         }
 
         // ============================================================
-        //  FLASH
+        //  FLASH (LANTERNA)
         // ============================================================
+        var flashState = { cadastro: false, compras: false, notinha: false, uso: false };
+
         function toggleFlash(tipo) {
-            let reader = null;
+            var reader = null;
             if (tipo === 'cadastro') reader = html5CadastroReader;
             else if (tipo === 'compras') reader = html5ComprasReader;
             else if (tipo === 'notinha') reader = html5NotinhaReader;
@@ -1509,11 +1336,12 @@
                 return;
             }
             try {
-                reader.toggleFlash().then(() => {
+                reader.toggleFlash().then(function() {
                     flashState[tipo] = !flashState[tipo];
                     atualizarBotaoFlash(tipo);
-                }).catch(e => {
-                    alert('Flash não suportado neste dispositivo.');
+                }).catch(function(e) {
+                    alert('Flash não suportado neste dispositivo ou navegador.');
+                    console.warn('Erro ao alternar flash:', e);
                 });
             } catch (e) {
                 alert('Erro ao acessar o flash: ' + e.message);
@@ -1529,8 +1357,726 @@
             }
         }
 
+        function ligarFlashAutomatico(tipo, reader) {
+            if (!reader) return;
+            try {
+                reader.toggleFlash().then(function() {
+                    flashState[tipo] = true;
+                    atualizarBotaoFlash(tipo);
+                }).catch(function(e) {
+                    flashState[tipo] = false;
+                });
+            } catch (e) {
+                flashState[tipo] = false;
+            }
+        }
+
         // ============================================================
-        //  LEITOR DE QR CODE - VERSÃO CORRIGIDA
+        //  DADOS PRINCIPAIS
+        // ============================================================
+        var estoque = [],
+            carrinho = [],
+            vendas = [],
+            produtoEscaneadoCompra = null,
+            produtoEscaneadoUso = null;
+        var html5CadastroReader = null,
+            html5ComprasReader = null,
+            html5NotinhaReader = null,
+            html5UsoReader = null;
+
+        // ============================================================
+        //  GESTÃO DE DADOS (LOCALSTORAGE)
+        // ============================================================
+        function carregarDados() {
+            var data = localStorage.getItem('estoqueApp');
+            if (data) {
+                try {
+                    var parsed = JSON.parse(data);
+                    estoque = parsed.estoque || [];
+                    carrinho = parsed.carrinho || [];
+                    vendas = parsed.vendas || [];
+                    if (!parsed.mercados) parsed.mercados = ['Extra', 'Atacadão', 'Mercado Livre'];
+                    localStorage.setItem('estoqueApp', JSON.stringify({ ...parsed,
+                        mercados: parsed.mercados }));
+                    return parsed.mercados;
+                } catch (e) {
+                    console.warn('Erro ao carregar dados, reiniciando.');
+                    localStorage.removeItem('estoqueApp');
+                }
+            }
+            return ['Extra', 'Atacadão', 'Mercado Livre'];
+        }
+
+        function salvarDados() {
+            var mercados = getMercados();
+            localStorage.setItem('estoqueApp', JSON.stringify({
+                estoque: estoque,
+                carrinho: carrinho,
+                vendas: vendas,
+                mercados: mercados
+            }));
+        }
+
+        function getMercados() {
+            var data = localStorage.getItem('estoqueApp');
+            if (data) {
+                try {
+                    var parsed = JSON.parse(data);
+                    return parsed.mercados || ['Extra', 'Atacadão', 'Mercado Livre'];
+                } catch (e) { return ['Extra', 'Atacadão', 'Mercado Livre']; }
+            }
+            return ['Extra', 'Atacadão', 'Mercado Livre'];
+        }
+
+        function setMercados(mercados) {
+            var data = localStorage.getItem('estoqueApp');
+            var parsed = data ? JSON.parse(data) : {};
+            parsed.mercados = mercados;
+            localStorage.setItem('estoqueApp', JSON.stringify(parsed));
+            renderizarMercados();
+        }
+
+        // ============================================================
+        //  EXTRATO DE COMPRAS
+        // ============================================================
+        function abrirExtratoCompras() {
+            document.getElementById('extratoComprasModal').classList.add('active');
+            gerarExtratoCompras();
+        }
+
+        function fecharExtratoCompras() {
+            document.getElementById('extratoComprasModal').classList.remove('active');
+        }
+
+        function gerarExtratoCompras() {
+            var container = document.getElementById('extratoConteudo');
+            var compras = vendas.filter(function(v) { return v.tipo === 'COMPRA'; });
+            if (!compras.length) {
+                container.innerHTML = '<div class="empty-msg">Nenhuma compra registrada.</div>';
+                return;
+            }
+            compras.sort(function(a, b) { return a.dataHora < b.dataHora ? 1 : -1; });
+            var grupos = {};
+            compras.forEach(function(c) {
+                var chave = c.data + '|' + (c.mercado || 'Sem mercado');
+                if (!grupos[chave]) {
+                    grupos[chave] = { data: c.data, mercado: c.mercado || 'Sem mercado', itens: [], total: 0 };
+                }
+                grupos[chave].itens.push(c);
+                grupos[chave].total += c.total;
+            });
+            var html = '';
+            var chaves = Object.keys(grupos);
+            chaves.forEach(function(chave) {
+                var g = grupos[chave];
+                html += '<div class="extrato-item">';
+                html += '<div class="data-mercado"><span>📅 ' + g.data + '</span><span>🏪 ' + g.mercado +
+                    '</span><span style="font-weight:700;color:#16a34a;">R$ ' + g.total.toFixed(2).replace('.',
+                        ',') + '</span></div>';
+                html += '<div class="produtos">';
+                g.itens.forEach(function(item) {
+                    var unit = item.precoUnitario ? 'R$ ' + item.precoUnitario.toFixed(2).replace('.', ',') :
+                        '-';
+                    html += '<div class="prod-linha"><span>' + item.nome + ' (x' + item.quantidade +
+                        ')</span><span>' + unit + ' = R$ ' + item.total.toFixed(2).replace('.', ',') +
+                        '</span></div>';
+                });
+                html += '</div></div>';
+            });
+            var totalGeral = compras.reduce(function(acc, c) { return acc + c.total; }, 0);
+            html += '<div class="extrato-total">💰 Total Geral: R$ ' + totalGeral.toFixed(2).replace('.', ',') +
+                '</div>';
+            container.innerHTML = html;
+        }
+
+        function limparExtratoCompras() {
+            if (!confirm('Remover todo o histórico de compras?')) return;
+            vendas = vendas.filter(function(v) { return v.tipo !== 'COMPRA'; });
+            salvarDados();
+            gerarExtratoCompras();
+            alert('Histórico de compras removido!');
+        }
+
+        // ============================================================
+        //  CARDÁPIO
+        // ============================================================
+        function getCardapio() {
+            var data = localStorage.getItem('cardapioApp');
+            if (data) {
+                try { return JSON.parse(data); } catch (e) { return []; }
+            }
+            return [];
+        }
+
+        function setCardapio(fotos) {
+            localStorage.setItem('cardapioApp', JSON.stringify(fotos));
+        }
+
+        function adicionarFotoCardapio(base64, nome) {
+            var fotos = getCardapio();
+            var id = Date.now();
+            var data = new Date().toLocaleString('pt-BR');
+            fotos.push({ id: id, nome: nome || 'Cardápio - ' + data, imagem: base64, data: data });
+            setCardapio(fotos);
+            renderizarCardapio();
+        }
+
+        function removerFotoCardapio(id) {
+            if (!confirm('Remover esta foto do cardápio?')) return;
+            var fotos = getCardapio().filter(function(f) { return f.id !== id; });
+            setCardapio(fotos);
+            renderizarCardapio();
+        }
+
+        function limparCardapio() {
+            if (!confirm('Remover todas as fotos do cardápio?')) return;
+            setCardapio([]);
+            renderizarCardapio();
+        }
+
+        function renderizarCardapio() {
+            var container = document.getElementById('cardapioGaleria');
+            var fotos = getCardapio();
+            if (!fotos.length) {
+                container.innerHTML = '<div class="empty-msg">Nenhuma foto do cardápio.</div>';
+                return;
+            }
+            var html = '';
+            fotos.forEach(function(f) {
+                html += '<div class="cardapio-item">' +
+                    '<img src="' + f.imagem + '" alt="' + f.nome + '">' +
+                    '<div class="info"><span>' + f.nome + '</span><span class="del" onclick="removerFotoCardapio(' +
+                    f.id + ')">✕</span></div>' +
+                    '</div>';
+            });
+            container.innerHTML = html;
+        }
+
+        function abrirCardapio() {
+            document.getElementById('cardapioModal').classList.add('active');
+            renderizarCardapio();
+        }
+
+        function fecharCardapio() {
+            document.getElementById('cardapioModal').classList.remove('active');
+        }
+
+        function tirarFotoCardapio() {
+            var input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.capture = 'environment';
+            input.onchange = function(e) {
+                var file = e.target.files[0];
+                if (!file) return;
+                var reader = new FileReader();
+                reader.onload = function(ev) {
+                    var base64 = ev.target.result;
+                    var nome = prompt('Nome da foto (opcional):') || 'Cardápio - ' + new Date().toLocaleString(
+                    'pt-BR');
+                    adicionarFotoCardapio(base64, nome);
+                };
+                reader.readAsDataURL(file);
+                input.value = '';
+            };
+            input.click();
+        }
+
+        function uploadFotosCardapio(event) {
+            var files = event.target.files;
+            if (!files.length) return;
+            for (var i = 0; i < files.length; i++) {
+                var file = files[i];
+                var reader = new FileReader();
+                reader.onload = function(ev) {
+                    var base64 = ev.target.result;
+                    var nome = prompt('Nome da foto (opcional):') || 'Cardápio - ' + new Date().toLocaleString(
+                    'pt-BR');
+                    adicionarFotoCardapio(base64, nome);
+                };
+                reader.readAsDataURL(file);
+            }
+            event.target.value = '';
+        }
+
+        function abrirCardapioOnline() {
+            var fotos = getCardapio();
+            if (!fotos.length) { alert('Nenhuma foto para exibir.'); return; }
+            var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Cardápio Online</title><style>body{background:#f1f5f9;padding:16px;font-family:sans-serif;}h1{text-align:center;color:#0f3b5e;}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;max-width:1200px;margin:0 auto;}.item{background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 2px 4px rgba(0,0,0,0.1);}.item img{width:100%;height:200px;object-fit:cover;display:block;}.item .info{padding:6px 10px;font-size:14px;color:#475569;text-align:center;}</style></head><body><h1>📋 Cardápio</h1><div class="grid">';
+            fotos.forEach(function(f) {
+                html += '<div class="item"><img src="' + f.imagem + '" alt="' + f.nome + '"><div class="info">' +
+                    f.nome + '</div></div>';
+            });
+            html += '</div></body></html>';
+            var blob = new Blob([html], { type: 'text/html' });
+            var url = URL.createObjectURL(blob);
+            window.open(url, '_blank');
+        }
+
+        document.getElementById('cardapioModal').addEventListener('click', function(e) {
+            if (e.target === this) fecharCardapio();
+        });
+
+        // ============================================================
+        //  INICIALIZAÇÃO
+        // ============================================================
+        function init() {
+            carregarTitulo();
+            carregarDados();
+            renderizarEstoque();
+            renderizarCarrinho();
+            renderizarMercados();
+            atualizarFaturamentoHoje();
+            atualizarAlertas();
+            var now = new Date();
+            var mesAtual = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+            document.getElementById('filtroMesMercado').value = mesAtual;
+        }
+
+        // ============================================================
+        //  FATURAMENTO
+        // ============================================================
+        function atualizarFaturamentoHoje() {
+            var hoje = new Date().toLocaleDateString('pt-BR');
+            var vendasHoje = vendas.filter(function(v) { return v.data === hoje && v.codigo === 'MANUAL'; });
+            var el = document.getElementById('faturamentoHoje');
+            if (vendasHoje.length) {
+                var ultimo = vendasHoje[vendasHoje.length - 1];
+                el.textContent = 'R$ ' + ultimo.total.toFixed(2).replace('.', ',');
+            } else el.textContent = 'R$ 0,00';
+        }
+
+        function adicionarFaturamentoManual() {
+            var valor = parseFloat(document.getElementById('inputFaturamentoManual').value);
+            if (isNaN(valor) || valor <= 0) { alert('Digite um valor válido.'); return; }
+            var agora = new Date();
+            var data = agora.toLocaleDateString('pt-BR');
+            var hora = agora.toLocaleTimeString('pt-BR');
+            vendas.push({
+                data: data,
+                dataHora: data + ' ' + hora,
+                codigo: 'MANUAL',
+                nome: 'Venda Manual',
+                quantidade: 1,
+                valorUnitario: valor,
+                total: valor
+            });
+            salvarDados();
+            atualizarFaturamentoHoje();
+            document.getElementById('inputFaturamentoManual').value = '';
+            alert('Faturamento registrado!');
+        }
+
+        // ============================================================
+        //  ESTOQUE
+        // ============================================================
+        function salvarProduto() {
+            var codigo = document.getElementById('productBarcode').value.trim();
+            var nome = document.getElementById('productName').value.trim();
+            var tipo = document.getElementById('productTipo').value;
+            var estoqueAtual = parseInt(document.getElementById('productStock').value) || 0;
+            var minimo = parseInt(document.getElementById('productMin').value) || 0;
+            var preco = parseFloat(document.getElementById('productPrice').value) || 0;
+            var precoMin = parseFloat(document.getElementById('productPrecoMin').value) || 0;
+            var precoMedio = parseFloat(document.getElementById('productPrecoMedio').value) || 0;
+
+            var mercados = getMercados();
+            var mercado = '';
+            if (mercados.length > 0) {
+                var msg = 'Selecione o mercado:\n';
+                mercados.forEach(function(m, i) { msg += (i + 1) + ' - ' + m + '\n'; });
+                var opcao = prompt(msg + '\nDigite o número correspondente:');
+                if (opcao !== null) {
+                    var idx = parseInt(opcao) - 1;
+                    if (idx >= 0 && idx < mercados.length) mercado = mercados[idx];
+                    else alert('Opção inválida. Mercado não definido.');
+                }
+            } else {
+                alert('Nenhum mercado cadastrado. Adicione um mercado primeiro.');
+                return;
+            }
+
+            if (!codigo || !nome) { alert('Código e nome são obrigatórios.'); return; }
+            var existente = estoque.findIndex(function(item) { return item.codigo === codigo; });
+            if (existente !== -1) {
+                if (!confirm('Atualizar "' + estoque[existente].nome + '"?')) return;
+                estoque[existente] = {
+                    codigo: codigo,
+                    nome: nome,
+                    tipo: tipo,
+                    mercado: mercado,
+                    estoque: estoqueAtual,
+                    minimo: minimo,
+                    preco: preco,
+                    precoMin: precoMin,
+                    precoMedio: precoMedio
+                };
+            } else {
+                estoque.push({
+                    codigo: codigo,
+                    nome: nome,
+                    tipo: tipo,
+                    mercado: mercado,
+                    estoque: estoqueAtual,
+                    minimo: minimo,
+                    preco: preco,
+                    precoMin: precoMin,
+                    precoMedio: precoMedio
+                });
+            }
+            salvarDados();
+            limparCampos();
+            renderizarEstoque();
+            calcularFaltantes();
+            atualizarAlertas();
+            alert('Produto salvo!');
+        }
+
+        function limparCampos() {
+            ['productBarcode', 'productName', 'productStock', 'productMin', 'productPrice', 'productPrecoMin',
+                'productPrecoMedio'
+            ].forEach(function(id) { document.getElementById(id).value = ''; });
+        }
+
+        function excluirItem(index) {
+            if (confirm('Remover "' + estoque[index].nome + '"?')) {
+                estoque.splice(index, 1);
+                salvarDados();
+                renderizarEstoque();
+                calcularFaltantes();
+                atualizarAlertas();
+            }
+        }
+
+        function editarItem(index) {
+            var item = estoque[index];
+            document.getElementById('productBarcode').value = item.codigo;
+            document.getElementById('productName').value = item.nome;
+            document.getElementById('productTipo').value = item.tipo || 'Produto';
+            document.getElementById('productStock').value = item.estoque;
+            document.getElementById('productMin').value = item.minimo;
+            document.getElementById('productPrice').value = item.preco || '';
+            document.getElementById('productPrecoMin').value = item.precoMin || '';
+            document.getElementById('productPrecoMedio').value = item.precoMedio || '';
+            document.querySelector('.section').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function renderizarEstoque() {
+            var tbody = document.getElementById('stockTableBodyGestor');
+            if (!estoque.length) {
+                tbody.innerHTML = '<tr><td colspan="11" class="empty-msg">Nenhum produto</td></tr>';
+                return;
+            }
+            var html = '';
+            estoque.forEach(function(item, idx) {
+                var status = item.tipo === 'Utensílio' ?
+                    (item.estoque > 0 ? '<span class="badge badge-success">Presente</span>' :
+                        '<span class="badge badge-danger">Ausente</span>') :
+                    (item.estoque < item.minimo ? '<span class="badge badge-danger">Baixo</span>' :
+                        '<span class="badge badge-success">OK</span>');
+                var tipoBadge = item.tipo ? '<span class="badge badge-secondary">' + item.tipo + '</span>' : '-';
+                var mercadoDisplay = item.mercado || '-';
+                html += '<tr>' +
+                    '<td><strong>' + item.codigo + '</strong></td>' +
+                    '<td>' + item.nome + '</td>' +
+                    '<td>' + tipoBadge + '</td>' +
+                    '<td>' + mercadoDisplay + '</td>' +
+                    '<td>' + item.estoque + '</td>' +
+                    '<td>' + item.minimo + '</td>' +
+                    '<td>' + (item.preco ? 'R$ ' + item.preco.toFixed(2).replace('.', ',') : '-') + '</td>' +
+                    '<td>' + (item.precoMin ? 'R$ ' + item.precoMin.toFixed(2).replace('.', ',') : '-') + '</td>' +
+                    '<td>' + (item.precoMedio ? 'R$ ' + item.precoMedio.toFixed(2).replace('.', ',') : '-') + '</td>' +
+                    '<td>' + status + '</td>' +
+                    '<td>' +
+                    '<button class="btn-acao btn-acao-editar" onclick="editarItem(' + idx + ')">✎</button>' +
+                    '<button class="btn-acao btn-acao-excluir" onclick="excluirItem(' + idx + ')">✕</button>' +
+                    '</td></tr>';
+            });
+            tbody.innerHTML = html;
+        }
+
+        function verificarEstoque() {
+            if (!estoque.length) { alert('Nenhum produto.'); return; }
+            var rel = '',
+                falta = false;
+            estoque.forEach(function(item) {
+                var status = (item.tipo === 'Utensílio') ? (item.estoque > 0 ? 'OK' : 'FALTA') : (item.estoque < item
+                    .minimo ? 'FALTA' : 'OK');
+                if (status === 'FALTA') falta = true;
+                rel += '<div style="display:flex; justify-content:space-between; padding:4px 8px; border-bottom:1px solid #e2e8f0; font-size:11px;">' +
+                    '<span><strong>' + item.nome + '</strong> (' + item.codigo + ') - Estoque: ' + item.estoque +
+                    ' | Mín: ' + item.minimo + '</span>' +
+                    '<span style="color:' + (status === 'OK' ? '#16a34a' : '#dc2626') + '; font-weight:700;">' +
+                    status +
+                    '</span></div>';
+            });
+            var resumo = falta ?
+                '<div style="background:#fee2e2; padding:4px; border-radius:4px; margin-bottom:6px; color:#b91c1c; font-weight:700; font-size:11px;">⚠️ Itens com FALTA!</div>' :
+                '<div style="background:#dcfce7; padding:4px; border-radius:4px; margin-bottom:6px; color:#15803d; font-weight:700; font-size:11px;">✅ Todos OK!</div>';
+            document.getElementById('reportContent').innerHTML = resumo + rel;
+            document.getElementById('reportArea').style.display = 'block';
+            calcularFaltantes();
+        }
+
+        // ============================================================
+        //  UTENSÍLIOS
+        // ============================================================
+        function atualizarAlertas() {
+            var ausentes = estoque.filter(function(item) { return item.tipo === 'Utensílio' && item.estoque === 0; });
+            var container = document.getElementById('alertContent');
+            if (!ausentes.length) {
+                container.innerHTML =
+                    '<div style="color:#16a34a; font-weight:600; font-size:11px;">✅ Todos presentes!</div>';
+                return;
+            }
+            var html = '';
+            ausentes.forEach(function(item) {
+                var idx = estoque.indexOf(item);
+                html += '<div class="alert-item">' +
+                    '<span>🔴</span>' +
+                    '<span>' + item.nome + '</span>' +
+                    '<button class="btn btn-success btn-sm" onclick="marcarUtensilioPresente(' + idx +
+                    ')">✔</button>' +
+                    '</div>';
+            });
+            html += '<button class="btn btn-success btn-sm" onclick="marcarTodosPresentes()">✔ Todos</button>';
+            container.innerHTML = html;
+        }
+
+        function marcarUtensilioPresente(index) {
+            if (estoque[index] && estoque[index].tipo === 'Utensílio') {
+                estoque[index].estoque = 1;
+                salvarDados();
+                renderizarEstoque();
+                calcularFaltantes();
+                atualizarAlertas();
+                renderizarUtensilios();
+            }
+        }
+
+        function marcarTodosPresentes() {
+            estoque.forEach(function(item) {
+                if (item.tipo === 'Utensílio') item.estoque = 1;
+                else item.estoque = Math.max(item.estoque, 1);
+            });
+            salvarDados();
+            renderizarEstoque();
+            calcularFaltantes();
+            atualizarAlertas();
+            renderizarUtensilios();
+            alert('Todos marcados!');
+        }
+
+        function abrirModalUtensilios() {
+            document.getElementById('utensiliosModal').classList.add('active');
+            renderizarUtensilios();
+        }
+
+        function fecharModalUtensilios() { document.getElementById('utensiliosModal').classList.remove('active'); }
+
+        function adicionarUtensilio() {
+            var nome = document.getElementById('utensilioNome').value.trim();
+            if (!nome) { alert('Digite o nome.'); return; }
+            var codigo = 'UTIL_' + Date.now();
+            if (estoque.find(function(item) { return item.nome === nome && item.tipo === 'Utensílio'; })) { alert(
+                    'Já existe.'); return; }
+            estoque.push({
+                codigo: codigo,
+                nome: nome,
+                tipo: 'Utensílio',
+                mercado: '',
+                estoque: 0,
+                minimo: 1,
+                preco: 0,
+                precoMin: 0,
+                precoMedio: 0
+            });
+            salvarDados();
+            renderizarEstoque();
+            renderizarUtensilios();
+            document.getElementById('utensilioNome').value = '';
+            atualizarAlertas();
+        }
+
+        function renderizarUtensilios() {
+            var utensilios = estoque.filter(function(item) { return item.tipo === 'Utensílio'; });
+            var container = document.getElementById('utensiliosLista');
+            if (!utensilios.length) { container.innerHTML = '<div class="empty-msg">Nenhum utensílio</div>'; return; }
+            var html = '';
+            utensilios.forEach(function(item) {
+                var presente = item.estoque > 0;
+                html += '<div class="utensilio-item">' +
+                    '<span><strong>' + item.nome + '</strong></span>' +
+                    '<span class="badge ' + (presente ? 'badge-success' : 'badge-danger') + '">' + (presente ?
+                        '✅ Presente' : '❌ Ausente') + '</span>' +
+                    '<div>' +
+                    (!presente ? '<button class="btn btn-success btn-sm" onclick="marcarPresente(\'' + item
+                        .codigo + '\')">✔</button>' : '') +
+                    '<button class="btn btn-danger btn-sm" onclick="excluirUtensilio(\'' + item.codigo +
+                    '\')">✕</button>' +
+                    '</div></div>';
+            });
+            container.innerHTML = html;
+        }
+
+        function marcarPresente(codigo) {
+            var item = estoque.find(function(it) { return it.codigo === codigo; });
+            if (item) { item.estoque = 1;
+                salvarDados();
+                renderizarEstoque();
+                renderizarUtensilios();
+                atualizarAlertas(); }
+        }
+
+        function excluirUtensilio(codigo) {
+            if (confirm('Remover?')) {
+                var idx = estoque.findIndex(function(item) { return item.codigo === codigo; });
+                if (idx !== -1) { estoque.splice(idx, 1);
+                    salvarDados();
+                    renderizarEstoque();
+                    renderizarUtensilios();
+                    atualizarAlertas(); }
+            }
+        }
+
+        // ============================================================
+        //  CARRINHO
+        // ============================================================
+        function calcularFaltantes() {
+            var novo = [];
+            estoque.forEach(function(item) {
+                if (item.tipo !== 'Utensílio' && item.estoque < item.minimo) {
+                    novo.push({
+                        codigo: item.codigo,
+                        nome: item.nome,
+                        quantidade: item.minimo - item.estoque,
+                        preco: item.preco || 0
+                    });
+                }
+            });
+            carrinho = novo;
+            salvarDados();
+            renderizarCarrinho();
+        }
+
+        function renderizarCarrinho() {
+            var container = document.getElementById('cartContainer');
+            if (!carrinho.length) {
+                container.innerHTML =
+                    '<div class="empty-msg">Nenhum item para comprar.</div>';
+                return;
+            }
+            var html = '';
+            var totalCarrinho = 0;
+            carrinho.forEach(function(item) {
+                var valorItem = item.preco * item.quantidade;
+                totalCarrinho += valorItem;
+                html += '<div class="cart-item">' +
+                    '<span><strong>' + item.nome + '</strong> (' + item.codigo + ') - Qtd: ' + item.quantidade +
+                    '</span>' +
+                    '<span>R$ ' + valorItem.toFixed(2).replace('.', ',') +
+                    '</span>' +
+                    '</div>';
+            });
+            // Adiciona o total do carrinho
+            html += '<div class="cart-total">💰 Total a gastar: R$ ' + totalCarrinho.toFixed(2).replace('.', ',') +
+                '</div>';
+            container.innerHTML = html;
+        }
+
+        function checarTudo() {
+            var agora = new Date();
+            var dataHora = agora.toLocaleDateString('pt-BR') + ' ' + agora.toLocaleTimeString('pt-BR');
+            var el = document.getElementById('checkResult');
+            if (!estoque.length) {
+                el.innerHTML =
+                    '<div class="check-result ok">🕒 ' + dataHora + '<br>✅ Nenhum item.</div>';
+                return;
+            }
+            var faltantes = estoque.filter(function(item) { return (item.tipo === 'Utensílio') ? item.estoque === 0 :
+                item.estoque < item.minimo; });
+            if (!faltantes.length) {
+                el.innerHTML =
+                    '<div class="check-result ok">🕒 ' + dataHora + '<br>✅ Todos OK!</div>';
+                return;
+            }
+            var html = '<div class="check-result falta">🕒 ' + dataHora + '<br>⚠️ Itens em falta:<ul>';
+            faltantes.forEach(function(item) {
+                var faltaMsg = item.tipo === 'Utensílio' ? 'ausente' : 'faltam ' + (item.minimo - item.estoque);
+                html += '<li>🔹 <strong>' + item.nome + '</strong> (' + item.codigo + ') - ' + faltaMsg + '</li>';
+            });
+            html += '</ul></div>';
+            el.innerHTML = html;
+        }
+
+        // ============================================================
+        //  COMPRAS (manual produto a produto)
+        // ============================================================
+        function comprarProduto(codigo, quantidade, mercado, preco) {
+            var idx = estoque.findIndex(function(p) { return p.codigo === codigo; });
+            if (idx === -1) { alert('Produto não encontrado.'); return false; }
+            estoque[idx].estoque += quantidade;
+            var agora = new Date();
+            var data = agora.toLocaleDateString('pt-BR');
+            var hora = agora.toLocaleTimeString('pt-BR');
+            vendas.push({
+                data: data,
+                dataHora: data + ' ' + hora,
+                codigo: codigo,
+                nome: estoque[idx].nome,
+                quantidade: quantidade,
+                mercado: mercado,
+                precoUnitario: preco,
+                total: preco * quantidade,
+                tipo: 'COMPRA'
+            });
+            salvarDados();
+            renderizarEstoque();
+            calcularFaltantes();
+            atualizarAlertas();
+            alert('Compra registrada! Estoque de "' + estoque[idx].nome + '" atualizado.');
+            return true;
+        }
+
+        // ============================================================
+        //  CONSUMO (USO) - DESCONTA DO ESTOQUE
+        // ============================================================
+        function consumirProduto(codigo, quantidade, descricao) {
+            var idx = estoque.findIndex(function(p) { return p.codigo === codigo; });
+            if (idx === -1) {
+                alert('Produto não cadastrado.');
+                return false;
+            }
+            if (estoque[idx].estoque < quantidade) {
+                alert('Estoque insuficiente! Disponível: ' + estoque[idx].estoque);
+                return false;
+            }
+            estoque[idx].estoque -= quantidade;
+            var agora = new Date();
+            var data = agora.toLocaleDateString('pt-BR');
+            var hora = agora.toLocaleTimeString('pt-BR');
+            vendas.push({
+                data: data,
+                dataHora: data + ' ' + hora,
+                codigo: codigo,
+                nome: estoque[idx].nome,
+                quantidade: quantidade,
+                mercado: 'Consumo',
+                precoUnitario: 0,
+                total: 0,
+                tipo: 'CONSUMO',
+                descricao: descricao || 'Uso registrado'
+            });
+            salvarDados();
+            renderizarEstoque();
+            calcularFaltantes();
+            atualizarAlertas();
+            alert('Consumo registrado! Estoque de "' + estoque[idx].nome + '" atualizado.');
+            return true;
+        }
+
+        // ============================================================
+        //  LEITOR DE QR CODE (GERAL)
         // ============================================================
         function iniciarLeitor(containerId, resultDivId, onSuccess) {
             var container = document.getElementById(containerId);
@@ -1539,7 +2085,8 @@
             resultDiv.textContent = '';
 
             if (typeof Html5Qrcode === 'undefined') {
-                container.innerHTML = '<span style="color:#dc2626;">❌ Biblioteca não carregada.</span>';
+                container.innerHTML =
+                    '<span style="color:#dc2626;">❌ Biblioteca não carregada. Verifique sua conexão com a internet.</span>';
                 resultDiv.textContent = 'Erro: biblioteca não carregada.';
                 resultDiv.style.color = '#dc2626';
                 return null;
@@ -1552,109 +2099,81 @@
                 return null;
             }
 
-            var reader = null;
-            var tentativaAtual = 0;
-            var modos = ['environment', 'user'];
+            try {
+                var reader = new Html5Qrcode(containerId);
+                var config = {
+                    fps: 15,
+                    qrbox: { width: 240, height: 160 },
+                    aspectRatio: 1.0,
+                    formatsToSupport: [
+                        Html5QrcodeSupportedFormats.EAN_13,
+                        Html5QrcodeSupportedFormats.EAN_8,
+                        Html5QrcodeSupportedFormats.UPC_A,
+                        Html5QrcodeSupportedFormats.CODE_128,
+                        Html5QrcodeSupportedFormats.CODE_39,
+                        Html5QrcodeSupportedFormats.ITF,
+                        Html5QrcodeSupportedFormats.CODABAR
+                    ]
+                };
 
-            function tentarIniciar(modo) {
-                if (reader) {
-                    try { reader.stop();
-                        reader.clear(); } catch (e) {}
-                    reader = null;
-                }
-
-                try {
-                    reader = new Html5Qrcode(containerId);
-                    var config = {
-                        fps: 15,
-                        qrbox: { width: 240, height: 160 },
-                        aspectRatio: 1.0,
-                        formatsToSupport: [
-                            Html5QrcodeSupportedFormats.EAN_13,
-                            Html5QrcodeSupportedFormats.EAN_8,
-                            Html5QrcodeSupportedFormats.UPC_A,
-                            Html5QrcodeSupportedFormats.CODE_128,
-                            Html5QrcodeSupportedFormats.CODE_39,
-                            Html5QrcodeSupportedFormats.ITF,
-                            Html5QrcodeSupportedFormats.CODABAR
-                        ]
-                    };
-
-                    reader.start({ facingMode: modo }, config,
-                        function(decodedText) {
-                            tocarBeep();
-                            onSuccess(decodedText);
-                        },
-                        function(error) { /* ignora */ }
-                    ).then(function() {
-                        resultDiv.textContent = '✅ Câmera ativa (' + modo + '). Aponte para o código.';
-                        resultDiv.style.color = '#16a34a';
-                        var btnId = 'btnReiniciar' + containerId.replace('barcode-reader-', '');
-                        var btn = document.getElementById(btnId);
-                        if (btn) btn.style.display = 'none';
-                    }).catch(function(err) {
-                        var msg = '❌ Erro ao acessar a câmera: ';
-                        if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-                            msg += 'Permissão negada. Permita a câmera.';
-                        } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
-                            if (tentativaAtual < modos.length - 1) {
-                                tentativaAtual++;
-                                resultDiv.textContent = '⚠️ Tentando ' + modos[tentativaAtual] + '...';
-                                resultDiv.style.color = '#f59e0b';
-                                tentarIniciar(modos[tentativaAtual]);
-                                return;
-                            } else {
-                                msg += 'Nenhuma câmera disponível. Use upload.';
-                            }
-                        } else {
-                            msg += err.message || err;
-                        }
-                        container.innerHTML = '<span>' + msg + '</span>';
-                        resultDiv.textContent = msg;
-                        resultDiv.style.color = '#dc2626';
-                        var btnId = 'btnReiniciar' + containerId.replace('barcode-reader-', '');
-                        var btn = document.getElementById(btnId);
-                        if (btn) {
-                            btn.style.display = 'inline-flex';
-                            btn.textContent = '🔄 Tentar novamente';
-                            btn.onclick = function() {
-                                tentativaAtual = 0;
-                                tentarIniciar(modos[0]);
-                            };
-                        }
-                    });
-                } catch (err) {
-                    container.innerHTML = '<span>❌ Erro ao criar leitor: ' + err.message + '</span>';
-                    resultDiv.textContent = 'Erro: ' + err.message;
+                reader.start({ facingMode: "environment" }, config,
+                    function(decodedText) {
+                        tocarBeep();
+                        onSuccess(decodedText);
+                    },
+                    function(error) { /* ignora */ }
+                ).catch(function(err) {
+                    var msg = '❌ Erro ao acessar a câmera: ';
+                    if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+                        msg += 'Permissão negada. Permita o acesso à câmera nas configurações do navegador.';
+                    } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+                        msg += 'Nenhuma câmera encontrada.';
+                    } else {
+                        msg += err.message || err;
+                    }
+                    container.innerHTML = '<span>' + msg + '</span>';
+                    resultDiv.textContent = msg;
                     resultDiv.style.color = '#dc2626';
+                    document.getElementById('btnReiniciarCadastro').style.display = 'inline-flex';
                     return null;
-                }
-            }
+                });
 
-            tentarIniciar(modos[0]);
-            return reader;
+                resultDiv.textContent = '✅ Câmera ativa. Aponte para o código.';
+                resultDiv.style.color = '#16a34a';
+                document.getElementById('btnReiniciarCadastro').style.display = 'none';
+                return reader;
+            } catch (err) {
+                container.innerHTML = '<span>❌ Erro ao criar leitor: ' + err.message + '</span>';
+                resultDiv.textContent = 'Erro: ' + err.message;
+                resultDiv.style.color = '#dc2626';
+                return null;
+            }
         }
 
         // ============================================================
-        //  LEITOR CADASTRO
+        //  LEITOR CADASTRO (com todos os campos)
         // ============================================================
         function abrirLeitorCadastro() {
-            document.getElementById('leitorCadastroModal').classList.add('active');
+            var modal = document.getElementById('leitorCadastroModal');
+            modal.classList.add('active');
             var resultDiv = document.getElementById('leitor-result-cadastro');
             resultDiv.textContent = '';
+            var btnFlash = document.getElementById('btnFlashCadastro');
+            btnFlash.textContent = '🔦 Flash';
+            btnFlash.className = 'btn btn-flash btn-sm';
             flashState.cadastro = false;
-            document.getElementById('btnFlashCadastro').textContent = '🔦 Flash';
-            document.getElementById('btnFlashCadastro').className = 'btn btn-flash btn-sm';
 
             if (html5CadastroReader) {
-                try { html5CadastroReader.stop();
-                    html5CadastroReader.clear(); } catch (e) {}
+                try {
+                    html5CadastroReader.stop();
+                    html5CadastroReader.clear();
+                } catch (e) {}
                 html5CadastroReader = null;
             }
 
             function onSuccess(decodedText) {
                 document.getElementById('productBarcode').value = decodedText;
-                var existente = estoque.find(item => item.codigo === decodedText);
+                var existente = estoque.find(function(item) { return item.codigo === decodedText; });
                 if (existente) {
                     document.getElementById('productName').value = existente.nome;
                     document.getElementById('productTipo').value = existente.tipo || 'Produto';
@@ -1679,18 +2198,23 @@
                         if (precoCompra === null) return;
                         precoCompra = parseFloat(precoCompra.replace(',', '.')) || 0;
 
-                        var mercadoSelecionado = '';
+                        var mercados = getMercados();
+                        var mercado = '';
                         if (mercados.length > 0) {
                             var msg = 'Selecione o MERCADO:\n';
-                            mercados.forEach((m, i) => msg += (i + 1) + ' - ' + m + '\n');
+                            mercados.forEach(function(m, i) { msg += (i + 1) + ' - ' + m + '\n'; });
                             var opcao = prompt(msg + '\nDigite o número correspondente:');
                             if (opcao !== null) {
                                 var idx = parseInt(opcao) - 1;
-                                if (idx >= 0 && idx < mercados.length) mercadoSelecionado = mercados[idx];
-                                else { alert('Opção inválida.'); return; }
-                            } else return;
+                                if (idx >= 0 && idx < mercados.length) {
+                                    mercado = mercados[idx];
+                                } else {
+                                    alert('Opção inválida. Mercado não definido.');
+                                    return;
+                                }
+                            } else { return; }
                         } else {
-                            alert('Nenhum mercado cadastrado.');
+                            alert('Nenhum mercado cadastrado. Adicione um mercado primeiro.');
                             return;
                         }
 
@@ -1698,7 +2222,7 @@
                             codigo: decodedText,
                             nome: nome.trim(),
                             tipo: 'Produto',
-                            mercado: mercadoSelecionado,
+                            mercado: mercado,
                             estoque: qtdInicial,
                             minimo: minimo,
                             preco: precoCompra,
@@ -1706,25 +2230,46 @@
                             precoMedio: 0
                         });
                         salvarDados();
-                        renderizarTudo();
-                        resultDiv.textContent = '✅ Produto salvo!';
+                        renderizarEstoque();
+                        calcularFaltantes();
+                        atualizarAlertas();
+
+                        document.getElementById('productName').value = nome.trim();
+                        document.getElementById('productTipo').value = 'Produto';
+                        document.getElementById('productStock').value = qtdInicial;
+                        document.getElementById('productMin').value = minimo;
+                        document.getElementById('productPrice').value = precoCompra;
+                        document.getElementById('productPrecoMin').value = '';
+                        document.getElementById('productPrecoMedio').value = '';
+
+                        resultDiv.textContent = '✅ Produto salvo! (estoque: ' + qtdInicial +
+                            ', mín: ' + minimo + ', preço de compra: R$ ' + precoCompra.toFixed(2).replace('.', ',') +
+                            ', mercado: ' + mercado + ')';
                     } else {
-                        resultDiv.textContent = '⚠️ Cancelado.';
+                        resultDiv.textContent = '⚠️ Cadastro cancelado.';
                     }
                 }
                 setTimeout(fecharLeitorCadastro, 2500);
             }
 
             html5CadastroReader = iniciarLeitor('barcode-reader-cadastro', 'leitor-result-cadastro', onSuccess);
+            if (html5CadastroReader) {
+                setTimeout(function() {
+                    ligarFlashAutomatico('cadastro', html5CadastroReader);
+                }, 500);
+            }
         }
 
         function fecharLeitorCadastro() {
             document.getElementById('leitorCadastroModal').classList.remove('active');
             if (html5CadastroReader) {
-                try { html5CadastroReader.stop();
-                    html5CadastroReader.clear(); } catch (e) {}
+                try {
+                    html5CadastroReader.stop();
+                    html5CadastroReader.clear();
+                } catch (e) {}
                 html5CadastroReader = null;
             }
+            flashState.cadastro = false;
         }
 
         function reiniciarLeitorCadastro() { abrirLeitorCadastro(); }
@@ -1734,29 +2279,90 @@
             if (!file) return;
             var resultDiv = document.getElementById('leitor-result-cadastro');
             var reader = new Html5Qrcode('barcode-reader-cadastro');
-            reader.scanFile(file, true).then(decoded => {
-                tocarBeep();
-                document.getElementById('productBarcode').value = decoded;
-                var existente = estoque.find(item => item.codigo === decoded);
-                if (existente) {
-                    document.getElementById('productName').value = existente.nome;
-                    document.getElementById('productTipo').value = existente.tipo || 'Produto';
-                    document.getElementById('productStock').value = existente.estoque;
-                    document.getElementById('productMin').value = existente.minimo;
-                    document.getElementById('productPrice').value = existente.preco || '';
-                    document.getElementById('productPrecoMin').value = existente.precoMin || '';
-                    document.getElementById('productPrecoMedio').value = existente.precoMedio || '';
-                    resultDiv.textContent = '✅ Preenchido!';
-                } else {
-                    alert('Produto não cadastrado. Use o formulário manual.');
-                }
-                setTimeout(fecharLeitorCadastro, 2500);
-            }).catch(() => alert('Erro ao ler imagem.'));
+            reader.scanFile(file, true)
+                .then(function(decoded) {
+                    tocarBeep();
+                    document.getElementById('productBarcode').value = decoded;
+                    var existente = estoque.find(function(item) { return item.codigo === decoded; });
+                    if (existente) {
+                        document.getElementById('productName').value = existente.nome;
+                        document.getElementById('productTipo').value = existente.tipo || 'Produto';
+                        document.getElementById('productStock').value = existente.estoque;
+                        document.getElementById('productMin').value = existente.minimo;
+                        document.getElementById('productPrice').value = existente.preco || '';
+                        document.getElementById('productPrecoMin').value = existente.precoMin || '';
+                        document.getElementById('productPrecoMedio').value = existente.precoMedio || '';
+                        resultDiv.textContent = '✅ Preenchido!';
+                    } else {
+                        var nome = prompt('Digite o NOME do produto:');
+                        if (nome && nome.trim()) {
+                            var qtdInicial = prompt('Quantidade INICIAL em estoque:');
+                            if (qtdInicial === null) return;
+                            qtdInicial = parseInt(qtdInicial) || 0;
+
+                            var minimo = prompt('Quantidade MÍNIMA (estoque mínimo):');
+                            if (minimo === null) return;
+                            minimo = parseInt(minimo) || 0;
+
+                            var precoCompra = prompt('Preço de COMPRA (R$):');
+                            if (precoCompra === null) return;
+                            precoCompra = parseFloat(precoCompra.replace(',', '.')) || 0;
+
+                            var mercados = getMercados();
+                            var mercado = '';
+                            if (mercados.length > 0) {
+                                var msg = 'Selecione o MERCADO:\n';
+                                mercados.forEach(function(m, i) { msg += (i + 1) + ' - ' + m + '\n'; });
+                                var opcao = prompt(msg + '\nDigite o número correspondente:');
+                                if (opcao !== null) {
+                                    var idx = parseInt(opcao) - 1;
+                                    if (idx >= 0 && idx < mercados.length) mercado = mercados[idx];
+                                    else { alert('Opção inválida. Mercado não definido.'); return; }
+                                } else { return; }
+                            } else {
+                                alert('Nenhum mercado cadastrado. Adicione um mercado primeiro.');
+                                return;
+                            }
+
+                            estoque.push({
+                                codigo: decoded,
+                                nome: nome.trim(),
+                                tipo: 'Produto',
+                                mercado: mercado,
+                                estoque: qtdInicial,
+                                minimo: minimo,
+                                preco: precoCompra,
+                                precoMin: 0,
+                                precoMedio: 0
+                            });
+                            salvarDados();
+                            renderizarEstoque();
+                            calcularFaltantes();
+                            atualizarAlertas();
+
+                            document.getElementById('productName').value = nome.trim();
+                            document.getElementById('productTipo').value = 'Produto';
+                            document.getElementById('productStock').value = qtdInicial;
+                            document.getElementById('productMin').value = minimo;
+                            document.getElementById('productPrice').value = precoCompra;
+                            document.getElementById('productPrecoMin').value = '';
+                            document.getElementById('productPrecoMedio').value = '';
+
+                            resultDiv.textContent = '✅ Produto salvo! (estoque: ' + qtdInicial +
+                                ', mín: ' + minimo + ', preço de compra: R$ ' + precoCompra.toFixed(2).replace('.', ',') +
+                                ', mercado: ' + mercado + ')';
+                        } else {
+                            resultDiv.textContent = '⚠️ Cadastro cancelado.';
+                        }
+                    }
+                    setTimeout(fecharLeitorCadastro, 2500);
+                })
+                .catch(function() { alert('Erro ao ler imagem.'); });
             event.target.value = '';
         }
 
         // ============================================================
-        //  LEITOR COMPRAS (resumido)
+        //  LEITOR COMPRAS
         // ============================================================
         function abrirModalCompras() {
             document.getElementById('leitorComprasModal').classList.add('active');
@@ -1767,18 +2373,22 @@
             document.getElementById('leitor-result-compras').textContent = '';
             document.getElementById('inputQtdCompra').value = '1';
             document.getElementById('inputPrecoCompra').value = '0.00';
+
+            var btnFlash = document.getElementById('btnFlashCompras');
+            btnFlash.textContent = '🔦 Flash';
+            btnFlash.className = 'btn btn-flash btn-sm';
             flashState.compras = false;
-            document.getElementById('btnFlashCompras').textContent = '🔦 Flash';
-            document.getElementById('btnFlashCompras').className = 'btn btn-flash btn-sm';
 
             if (html5ComprasReader) {
-                try { html5ComprasReader.stop();
-                    html5ComprasReader.clear(); } catch (e) {}
+                try {
+                    html5ComprasReader.stop();
+                    html5ComprasReader.clear();
+                } catch (e) {}
                 html5ComprasReader = null;
             }
 
             function onSuccess(decodedText) {
-                var produto = estoque.find(item => item.codigo === decodedText);
+                var produto = estoque.find(function(item) { return item.codigo === decodedText; });
                 if (!produto) {
                     alert('Produto não cadastrado.');
                     return;
@@ -1789,19 +2399,29 @@
                 document.getElementById('produtoEstoqueDisplay').textContent = 'Estoque: ' + produto.estoque;
                 document.getElementById('leitor-result-compras').textContent = '✅ Produto encontrado!';
                 document.getElementById('etapaProduto').classList.add('ativa');
+                document.getElementById('etapaMercado').classList.remove('ativa');
+                document.getElementById('etapaDados').classList.remove('ativa');
             }
 
             html5ComprasReader = iniciarLeitor('barcode-reader-compras', 'leitor-result-compras', onSuccess);
+            if (html5ComprasReader) {
+                setTimeout(function() {
+                    ligarFlashAutomatico('compras', html5ComprasReader);
+                }, 500);
+            }
         }
 
         function fecharModalCompras() {
             document.getElementById('leitorComprasModal').classList.remove('active');
             if (html5ComprasReader) {
-                try { html5ComprasReader.stop();
-                    html5ComprasReader.clear(); } catch (e) {}
+                try {
+                    html5ComprasReader.stop();
+                    html5ComprasReader.clear();
+                } catch (e) {}
                 html5ComprasReader = null;
             }
             produtoEscaneadoCompra = null;
+            flashState.compras = false;
         }
 
         function reiniciarLeitorCompras() { abrirModalCompras(); }
@@ -1811,34 +2431,40 @@
             if (!file) return;
             var resultDiv = document.getElementById('leitor-result-compras');
             var reader = new Html5Qrcode('barcode-reader-compras');
-            reader.scanFile(file, true).then(decoded => {
-                tocarBeep();
-                var produto = estoque.find(item => item.codigo === decoded);
-                if (!produto) {
-                    alert('Produto não cadastrado.');
-                    return;
-                }
-                produtoEscaneadoCompra = produto;
-                document.getElementById('produtoNomeDisplay').textContent = produto.nome;
-                document.getElementById('produtoCodigoDisplay').textContent = 'Código: ' + produto.codigo;
-                document.getElementById('produtoEstoqueDisplay').textContent = 'Estoque: ' + produto.estoque;
-                resultDiv.textContent = '✅ Produto encontrado!';
-                document.getElementById('etapaProduto').classList.add('ativa');
-            }).catch(() => alert('Erro ao ler imagem.'));
+            reader.scanFile(file, true)
+                .then(function(decoded) {
+                    tocarBeep();
+                    var produto = estoque.find(function(item) { return item.codigo === decoded; });
+                    if (!produto) {
+                        alert('Produto não cadastrado.');
+                        return;
+                    }
+                    produtoEscaneadoCompra = produto;
+                    document.getElementById('produtoNomeDisplay').textContent = produto.nome;
+                    document.getElementById('produtoCodigoDisplay').textContent = 'Código: ' + produto.codigo;
+                    document.getElementById('produtoEstoqueDisplay').textContent = 'Estoque: ' + produto.estoque;
+                    resultDiv.textContent = '✅ Produto encontrado!';
+                    document.getElementById('etapaProduto').classList.add('ativa');
+                    document.getElementById('etapaMercado').classList.remove('ativa');
+                    document.getElementById('etapaDados').classList.remove('ativa');
+                })
+                .catch(function() { alert('Erro ao ler imagem.'); });
             event.target.value = '';
         }
 
         function irParaEtapaMercado() {
             if (!produtoEscaneadoCompra) { alert('Escanear um produto.'); return; }
+            var mercados = getMercados();
             if (!mercados.length) { alert('Cadastre mercados.'); return; }
             var container = document.getElementById('mercadoEscolha');
             container.innerHTML = '';
-            mercados.forEach(nome => {
+            mercados.forEach(function(nome) {
                 var btn = document.createElement('button');
                 btn.className = 'btn-mercado';
                 btn.textContent = nome;
                 btn.onclick = function() {
-                    document.querySelectorAll('.btn-mercado').forEach(b => b.classList.remove('selecionado'));
+                    document.querySelectorAll('.btn-mercado').forEach(function(b) { b.classList.remove(
+                            'selecionado'); });
                     this.classList.add('selecionado');
                     this.dataset.mercado = nome;
                 };
@@ -1874,44 +2500,25 @@
             }
         }
 
-        function comprarProduto(codigo, quantidade, mercado, preco) {
-            var idx = estoque.findIndex(p => p.codigo === codigo);
-            if (idx === -1) { alert('Produto não encontrado.'); return false; }
-            estoque[idx].estoque += quantidade;
-            var agora = new Date();
-            var data = agora.toLocaleDateString('pt-BR');
-            var hora = agora.toLocaleTimeString('pt-BR');
-            vendas.push({
-                data: data,
-                dataHora: data + ' ' + hora,
-                codigo: codigo,
-                nome: estoque[idx].nome,
-                quantidade: quantidade,
-                mercado: mercado,
-                precoUnitario: preco,
-                total: preco * quantidade,
-                tipo: 'COMPRA'
-            });
-            salvarDados();
-            renderizarTudo();
-            return true;
-        }
-
         // ============================================================
-        //  LEITOR NOTINHA (resumido)
+        //  LEITOR NOTINHA
         // ============================================================
         function abrirLeitorNotinha() {
             document.getElementById('leitorNotinhaModal').classList.add('active');
             document.getElementById('leitor-result-notinha').textContent = '';
             document.getElementById('notinhaResumo').style.display = 'none';
             document.getElementById('textoNotinha').value = '';
+
+            var btnFlash = document.getElementById('btnFlashNotinha');
+            btnFlash.textContent = '🔦 Flash';
+            btnFlash.className = 'btn btn-flash btn-sm';
             flashState.notinha = false;
-            document.getElementById('btnFlashNotinha').textContent = '🔦 Flash';
-            document.getElementById('btnFlashNotinha').className = 'btn btn-flash btn-sm';
 
             if (html5NotinhaReader) {
-                try { html5NotinhaReader.stop();
-                    html5NotinhaReader.clear(); } catch (e) {}
+                try {
+                    html5NotinhaReader.stop();
+                    html5NotinhaReader.clear();
+                } catch (e) {}
                 html5NotinhaReader = null;
             }
 
@@ -1920,15 +2527,23 @@
             }
 
             html5NotinhaReader = iniciarLeitor('barcode-reader-notinha', 'leitor-result-notinha', onSuccess);
+            if (html5NotinhaReader) {
+                setTimeout(function() {
+                    ligarFlashAutomatico('notinha', html5NotinhaReader);
+                }, 500);
+            }
         }
 
         function fecharLeitorNotinha() {
             document.getElementById('leitorNotinhaModal').classList.remove('active');
             if (html5NotinhaReader) {
-                try { html5NotinhaReader.stop();
-                    html5NotinhaReader.clear(); } catch (e) {}
+                try {
+                    html5NotinhaReader.stop();
+                    html5NotinhaReader.clear();
+                } catch (e) {}
                 html5NotinhaReader = null;
             }
+            flashState.notinha = false;
         }
 
         function reiniciarLeitorNotinha() { abrirLeitorNotinha(); }
@@ -1938,16 +2553,18 @@
             if (!file) return;
             var resultDiv = document.getElementById('leitor-result-notinha');
             var reader = new Html5Qrcode('barcode-reader-notinha');
-            reader.scanFile(file, true).then(decoded => {
-                tocarBeep();
-                processarTextoNotinha(decoded);
-            }).catch(() => alert('Erro ao ler imagem.'));
+            reader.scanFile(file, true)
+                .then(function(decoded) {
+                    tocarBeep();
+                    processarTextoNotinha(decoded);
+                })
+                .catch(function() { alert('Erro ao ler imagem.'); });
             event.target.value = '';
         }
 
         function processarNotinhaManual() {
             var texto = document.getElementById('textoNotinha').value.trim();
-            if (!texto) { alert('Cole o texto.'); return; }
+            if (!texto) { alert('Cole o texto do QR code.'); return; }
             processarTextoNotinha(texto);
         }
 
@@ -1962,13 +2579,19 @@
             try {
                 var data = JSON.parse(texto);
                 if (Array.isArray(data)) {
-                    data.forEach(item => {
+                    data.forEach(function(item) {
                         var cod = item.codigo || item.code || item.ean || item.id || '';
                         var qtd = parseInt(item.quantidade || item.qtd || item.quantity || 1) || 1;
                         if (cod) itens.push({ codigo: cod.trim(), quantidade: qtd });
                     });
                 } else if (data.produtos && Array.isArray(data.produtos)) {
-                    data.produtos.forEach(item => {
+                    data.produtos.forEach(function(item) {
+                        var cod = item.codigo || item.code || item.ean || '';
+                        var qtd = parseInt(item.quantidade || item.qtd || 1) || 1;
+                        if (cod) itens.push({ codigo: cod.trim(), quantidade: qtd });
+                    });
+                } else if (data.items && Array.isArray(data.items)) {
+                    data.items.forEach(function(item) {
                         var cod = item.codigo || item.code || item.ean || '';
                         var qtd = parseInt(item.quantidade || item.qtd || 1) || 1;
                         if (cod) itens.push({ codigo: cod.trim(), quantidade: qtd });
@@ -1980,7 +2603,7 @@
                 }
             } catch (e) {
                 var partes = texto.split(/[,;\n]/);
-                partes.forEach(part => {
+                partes.forEach(function(part) {
                     part = part.trim();
                     if (!part) return;
                     var match = part.match(/(\d+)\s*[:=]\s*(\d+)/);
@@ -2006,10 +2629,10 @@
                 return;
             }
 
-            var adicionados = [],
-                ignorados = [];
-            itens.forEach(item => {
-                var prod = estoque.find(p => p.codigo === item.codigo);
+            var adicionados = [];
+            var ignorados = [];
+            itens.forEach(function(item) {
+                var prod = estoque.find(function(p) { return p.codigo === item.codigo; });
                 if (prod) {
                     prod.estoque += item.quantidade;
                     adicionados.push({ nome: prod.nome, codigo: prod.codigo, quantidade: item.quantidade });
@@ -2019,19 +2642,23 @@
             });
 
             salvarDados();
-            renderizarTudo();
+            renderizarEstoque();
+            calcularFaltantes();
+            atualizarAlertas();
 
             var html = '<div style="font-weight:700; margin-bottom:4px;">📊 Resumo da Notinha</div>';
             if (adicionados.length) {
                 html += '<div style="color:#16a34a; font-weight:600;">✅ Atualizados (' + adicionados.length + '):</div>';
-                adicionados.forEach(a => {
-                    html += '<div class="item-linha adicionado">' + a.nome + ' (' + a.codigo + ') +' + a.quantidade + '</div>';
+                adicionados.forEach(function(a) {
+                    html += '<div class="item-linha adicionado">' + a.nome + ' (' + a.codigo + ') +' + a
+                        .quantidade + '</div>';
                 });
             }
             if (ignorados.length) {
                 html += '<div style="color:#94a3b8; font-weight:600; margin-top:4px;">⏭️ Ignorados:</div>';
-                ignorados.forEach(i => {
-                    html += '<div class="item-linha ignorado">Código: ' + i.codigo + ' (qtd: ' + i.quantidade + ')</div>';
+                ignorados.forEach(function(i) {
+                    html += '<div class="item-linha ignorado">Código: ' + i.codigo + ' (qtd: ' + i.quantidade +
+                        ')</div>';
                 });
             }
             resumoDiv.innerHTML = html;
@@ -2043,7 +2670,7 @@
         }
 
         // ============================================================
-        //  LEITOR USO (CONSUMO)
+        //  LEITOR DE USO (CONSUMO)
         // ============================================================
         function abrirLeitorUso() {
             document.getElementById('leitorUsoModal').classList.add('active');
@@ -2051,24 +2678,28 @@
             document.getElementById('etapaUso').classList.remove('ativa');
             document.getElementById('leitor-result-uso').textContent = '';
             document.getElementById('inputQtdUso').value = '1';
+
+            var btnFlash = document.getElementById('btnFlashUso');
+            btnFlash.textContent = '🔦 Flash';
+            btnFlash.className = 'btn btn-flash btn-sm';
             flashState.uso = false;
-            document.getElementById('btnFlashUso').textContent = '🔦 Flash';
-            document.getElementById('btnFlashUso').className = 'btn btn-flash btn-sm';
 
             if (html5UsoReader) {
-                try { html5UsoReader.stop();
-                    html5UsoReader.clear(); } catch (e) {}
+                try {
+                    html5UsoReader.stop();
+                    html5UsoReader.clear();
+                } catch (e) {}
                 html5UsoReader = null;
             }
 
             function onSuccess(decodedText) {
-                var produto = estoque.find(item => item.codigo === decodedText);
+                var produto = estoque.find(function(item) { return item.codigo === decodedText; });
                 if (!produto) {
                     alert('Produto não cadastrado.');
                     return;
                 }
                 if (produto.tipo === 'Utensílio') {
-                    alert('Utensílio não pode ser consumido.');
+                    alert('Este item é um utensílio, não pode ser consumido.');
                     return;
                 }
                 produtoEscaneadoUso = produto;
@@ -2080,16 +2711,24 @@
             }
 
             html5UsoReader = iniciarLeitor('barcode-reader-uso', 'leitor-result-uso', onSuccess);
+            if (html5UsoReader) {
+                setTimeout(function() {
+                    ligarFlashAutomatico('uso', html5UsoReader);
+                }, 500);
+            }
         }
 
         function fecharLeitorUso() {
             document.getElementById('leitorUsoModal').classList.remove('active');
             if (html5UsoReader) {
-                try { html5UsoReader.stop();
-                    html5UsoReader.clear(); } catch (e) {}
+                try {
+                    html5UsoReader.stop();
+                    html5UsoReader.clear();
+                } catch (e) {}
                 html5UsoReader = null;
             }
             produtoEscaneadoUso = null;
+            flashState.uso = false;
         }
 
         function reiniciarLeitorUso() { abrirLeitorUso(); }
@@ -2099,24 +2738,26 @@
             if (!file) return;
             var resultDiv = document.getElementById('leitor-result-uso');
             var reader = new Html5Qrcode('barcode-reader-uso');
-            reader.scanFile(file, true).then(decoded => {
-                tocarBeep();
-                var produto = estoque.find(item => item.codigo === decoded);
-                if (!produto) {
-                    alert('Produto não cadastrado.');
-                    return;
-                }
-                if (produto.tipo === 'Utensílio') {
-                    alert('Utensílio não pode ser consumido.');
-                    return;
-                }
-                produtoEscaneadoUso = produto;
-                document.getElementById('produtoUsoNomeDisplay').textContent = produto.nome;
-                document.getElementById('produtoUsoCodigoDisplay').textContent = 'Código: ' + produto.codigo;
-                document.getElementById('produtoUsoEstoqueDisplay').textContent = 'Estoque: ' + produto.estoque;
-                resultDiv.textContent = '✅ Produto encontrado!';
-                document.getElementById('etapaUso').classList.add('ativa');
-            }).catch(() => alert('Erro ao ler imagem.'));
+            reader.scanFile(file, true)
+                .then(function(decoded) {
+                    tocarBeep();
+                    var produto = estoque.find(function(item) { return item.codigo === decoded; });
+                    if (!produto) {
+                        alert('Produto não cadastrado.');
+                        return;
+                    }
+                    if (produto.tipo === 'Utensílio') {
+                        alert('Este item é um utensílio, não pode ser consumido.');
+                        return;
+                    }
+                    produtoEscaneadoUso = produto;
+                    document.getElementById('produtoUsoNomeDisplay').textContent = produto.nome;
+                    document.getElementById('produtoUsoCodigoDisplay').textContent = 'Código: ' + produto.codigo;
+                    document.getElementById('produtoUsoEstoqueDisplay').textContent = 'Estoque: ' + produto.estoque;
+                    resultDiv.textContent = '✅ Produto encontrado!';
+                    document.getElementById('etapaUso').classList.add('ativa');
+                })
+                .catch(function() { alert('Erro ao ler imagem.'); });
             event.target.value = '';
         }
 
@@ -2141,467 +2782,43 @@
             }
         }
 
-        function consumirProduto(codigo, quantidade, descricao) {
-            var idx = estoque.findIndex(p => p.codigo === codigo);
-            if (idx === -1) {
-                alert('Produto não cadastrado.');
-                return false;
-            }
-            if (estoque[idx].estoque < quantidade) {
-                alert('Estoque insuficiente! Disponível: ' + estoque[idx].estoque);
-                return false;
-            }
-            estoque[idx].estoque -= quantidade;
-            var agora = new Date();
-            var data = agora.toLocaleDateString('pt-BR');
-            var hora = agora.toLocaleTimeString('pt-BR');
-            vendas.push({
-                data: data,
-                dataHora: data + ' ' + hora,
-                codigo: codigo,
-                nome: estoque[idx].nome,
-                quantidade: quantidade,
-                mercado: 'Consumo',
-                precoUnitario: 0,
-                total: 0,
-                tipo: 'CONSUMO',
-                descricao: descricao || 'Uso registrado'
-            });
-            salvarDados();
-            renderizarTudo();
-            return true;
-        }
-
         // ============================================================
-        //  DEMAS FUNÇÕES (estoque, mercados, relatórios, etc.)
+        //  MERCADOS
         // ============================================================
-
-        // --- MERCADOS (CORRIGIDO) ---
-        function getMercados() { return mercados; }
-
         function adicionarMercado() {
             var input = document.getElementById('inputNovoMercado');
             var nome = input.value.trim();
-            if (!nome) { alert('Digite o nome do mercado.'); return; }
-            if (mercados.indexOf(nome) !== -1) { alert('Este mercado já existe.'); return; }
+            if (!nome) { alert('Digite o nome.'); return; }
+            var mercados = getMercados();
+            if (mercados.indexOf(nome) !== -1) { alert('Já existe.'); return; }
             mercados.push(nome);
-            salvarDados();
-            renderizarMercados();
+            setMercados(mercados);
             input.value = '';
-            document.getElementById('syncStatus').textContent = '✅ Mercado adicionado';
-            setTimeout(() => {
-                document.getElementById('syncStatus').textContent = '✅ Sincronizado';
-            }, 2000);
+            renderizarMercados();
         }
 
         function removerMercado(nome) {
             if (!confirm('Remover "' + nome + '"?')) return;
-            mercados = mercados.filter(m => m !== nome);
-            salvarDados();
-            renderizarMercados();
+            var mercados = getMercados().filter(function(m) { return m !== nome; });
+            setMercados(mercados);
         }
 
         function renderizarMercados() {
             var container = document.getElementById('mercadosLista');
-            if (!mercados.length) {
-                container.innerHTML = '<span style="color:#94a3b8;font-size:11px;">Nenhum mercado cadastrado.</span>';
-                return;
-            }
+            var mercados = getMercados();
+            if (!mercados.length) { container.innerHTML =
+                    '<span style="color:#94a3b8;font-size:11px;">Nenhum mercado.</span>'; return; }
             var html = '';
-            mercados.forEach(nome => {
-                html += '<span class="mercado-tag">' + nome + ' <span class="remove" onclick="removerMercado(\'' + nome + '\')">×</span></span>';
+            mercados.forEach(function(nome) {
+                html += '<span class="mercado-tag">' + nome + ' <span class="remove" onclick="removerMercado(\'' +
+                    nome + '\')">×</span></span>';
             });
             container.innerHTML = html;
         }
 
-        // --- ESTOQUE ---
-        function salvarProduto() {
-            var codigo = document.getElementById('productBarcode').value.trim();
-            var nome = document.getElementById('productName').value.trim();
-            var tipo = document.getElementById('productTipo').value;
-            var estoqueAtual = parseInt(document.getElementById('productStock').value) || 0;
-            var minimo = parseInt(document.getElementById('productMin').value) || 0;
-            var preco = parseFloat(document.getElementById('productPrice').value) || 0;
-            var precoMin = parseFloat(document.getElementById('productPrecoMin').value) || 0;
-            var precoMedio = parseFloat(document.getElementById('productPrecoMedio').value) || 0;
-
-            if (!codigo || !nome) { alert('Código e nome são obrigatórios.'); return; }
-
-            var mercadoSelecionado = '';
-            if (mercados.length > 0) {
-                var msg = 'Selecione o mercado:\n';
-                mercados.forEach((m, i) => msg += (i + 1) + ' - ' + m + '\n');
-                var opcao = prompt(msg + '\nDigite o número correspondente:');
-                if (opcao !== null) {
-                    var idx = parseInt(opcao) - 1;
-                    if (idx >= 0 && idx < mercados.length) mercadoSelecionado = mercados[idx];
-                    else { alert('Opção inválida.'); return; }
-                } else return;
-            } else {
-                alert('Nenhum mercado cadastrado.');
-                return;
-            }
-
-            var existente = estoque.findIndex(item => item.codigo === codigo);
-            if (existente !== -1) {
-                if (!confirm('Atualizar "' + estoque[existente].nome + '"?')) return;
-                estoque[existente] = {
-                    codigo,
-                    nome,
-                    tipo,
-                    mercado: mercadoSelecionado,
-                    estoque: estoqueAtual,
-                    minimo,
-                    preco,
-                    precoMin,
-                    precoMedio
-                };
-            } else {
-                estoque.push({
-                    codigo,
-                    nome,
-                    tipo,
-                    mercado: mercadoSelecionado,
-                    estoque: estoqueAtual,
-                    minimo,
-                    preco,
-                    precoMin,
-                    precoMedio
-                });
-            }
-            salvarDados();
-            limparCampos();
-            renderizarTudo();
-            alert('Produto salvo!');
-        }
-
-        function limparCampos() {
-            ['productBarcode', 'productName', 'productStock', 'productMin', 'productPrice', 'productPrecoMin', 'productPrecoMedio'].forEach(id => document.getElementById(id).value = '');
-        }
-
-        function excluirItem(index) {
-            if (confirm('Remover "' + estoque[index].nome + '"?')) {
-                estoque.splice(index, 1);
-                salvarDados();
-                renderizarTudo();
-            }
-        }
-
-        function editarItem(index) {
-            var item = estoque[index];
-            document.getElementById('productBarcode').value = item.codigo;
-            document.getElementById('productName').value = item.nome;
-            document.getElementById('productTipo').value = item.tipo || 'Produto';
-            document.getElementById('productStock').value = item.estoque;
-            document.getElementById('productMin').value = item.minimo;
-            document.getElementById('productPrice').value = item.preco || '';
-            document.getElementById('productPrecoMin').value = item.precoMin || '';
-            document.getElementById('productPrecoMedio').value = item.precoMedio || '';
-            document.querySelector('.section').scrollIntoView({ behavior: 'smooth' });
-        }
-
-        function renderizarEstoque() {
-            var tbody = document.getElementById('stockTableBodyGestor');
-            if (!estoque.length) {
-                tbody.innerHTML = '<tr><td colspan="11" class="empty-msg">Nenhum produto</td></tr>';
-                return;
-            }
-            var html = '';
-            estoque.forEach((item, idx) => {
-                var status = item.tipo === 'Utensílio' ?
-                    (item.estoque > 0 ? '<span class="badge badge-success">Presente</span>' : '<span class="badge badge-danger">Ausente</span>') :
-                    (item.estoque < item.minimo ? '<span class="badge badge-danger">Baixo</span>' : '<span class="badge badge-success">OK</span>');
-                var tipoBadge = item.tipo ? '<span class="badge badge-secondary">' + item.tipo + '</span>' : '-';
-                var mercadoDisplay = item.mercado || '-';
-                html += '<tr>' +
-                    '<td><strong>' + item.codigo + '</strong></td>' +
-                    '<td>' + item.nome + '</td>' +
-                    '<td>' + tipoBadge + '</td>' +
-                    '<td>' + mercadoDisplay + '</td>' +
-                    '<td>' + item.estoque + '</td>' +
-                    '<td>' + item.minimo + '</td>' +
-                    '<td>' + (item.preco ? 'R$ ' + item.preco.toFixed(2).replace('.', ',') : '-') + '</td>' +
-                    '<td>' + (item.precoMin ? 'R$ ' + item.precoMin.toFixed(2).replace('.', ',') : '-') + '</td>' +
-                    '<td>' + (item.precoMedio ? 'R$ ' + item.precoMedio.toFixed(2).replace('.', ',') : '-') + '</td>' +
-                    '<td>' + status + '</td>' +
-                    '<td>' +
-                    '<button class="btn-acao btn-acao-editar" onclick="editarItem(' + idx + ')">✎</button>' +
-                    '<button class="btn-acao btn-acao-excluir" onclick="excluirItem(' + idx + ')">✕</button>' +
-                    '</td></tr>';
-            });
-            tbody.innerHTML = html;
-        }
-
-        function verificarEstoque() {
-            if (!estoque.length) { alert('Nenhum produto.'); return; }
-            var rel = '',
-                falta = false;
-            estoque.forEach(item => {
-                var status = (item.tipo === 'Utensílio') ? (item.estoque > 0 ? 'OK' : 'FALTA') : (item.estoque < item.minimo ? 'FALTA' : 'OK');
-                if (status === 'FALTA') falta = true;
-                rel += '<div style="display:flex; justify-content:space-between; padding:4px 8px; border-bottom:1px solid #e2e8f0; font-size:11px;">' +
-                    '<span><strong>' + item.nome + '</strong> (' + item.codigo + ') - Estoque: ' + item.estoque + ' | Mín: ' + item.minimo + '</span>' +
-                    '<span style="color:' + (status === 'OK' ? '#16a34a' : '#dc2626') + '; font-weight:700;">' + status + '</span></div>';
-            });
-            var resumo = falta ?
-                '<div style="background:#fee2e2; padding:4px; border-radius:4px; margin-bottom:6px; color:#b91c1c; font-weight:700; font-size:11px;">⚠️ Itens com FALTA!</div>' :
-                '<div style="background:#dcfce7; padding:4px; border-radius:4px; margin-bottom:6px; color:#15803d; font-weight:700; font-size:11px;">✅ Todos OK!</div>';
-            document.getElementById('reportContent').innerHTML = resumo + rel;
-            document.getElementById('reportArea').style.display = 'block';
-            calcularFaltantes();
-        }
-
-        // --- UTENSÍLIOS ---
-        function atualizarAlertas() {
-            var ausentes = estoque.filter(item => item.tipo === 'Utensílio' && item.estoque === 0);
-            var container = document.getElementById('alertContent');
-            if (!ausentes.length) {
-                container.innerHTML = '<div style="color:#16a34a; font-weight:600; font-size:11px;">✅ Todos presentes!</div>';
-                return;
-            }
-            var html = '';
-            ausentes.forEach(item => {
-                var idx = estoque.indexOf(item);
-                html += '<div class="alert-item">' +
-                    '<span>🔴</span>' +
-                    '<span>' + item.nome + '</span>' +
-                    '<button class="btn btn-success btn-sm" onclick="marcarUtensilioPresente(' + idx + ')">✔</button>' +
-                    '</div>';
-            });
-            html += '<button class="btn btn-success btn-sm" onclick="marcarTodosPresentes()">✔ Todos</button>';
-            container.innerHTML = html;
-        }
-
-        function marcarUtensilioPresente(index) {
-            if (estoque[index] && estoque[index].tipo === 'Utensílio') {
-                estoque[index].estoque = 1;
-                salvarDados();
-                renderizarTudo();
-            }
-        }
-
-        function marcarTodosPresentes() {
-            estoque.forEach(item => {
-                if (item.tipo === 'Utensílio') item.estoque = 1;
-                else item.estoque = Math.max(item.estoque, 1);
-            });
-            salvarDados();
-            renderizarTudo();
-            alert('Todos marcados!');
-        }
-
-        function abrirModalUtensilios() {
-            document.getElementById('utensiliosModal').classList.add('active');
-            renderizarUtensilios();
-        }
-
-        function fecharModalUtensilios() {
-            document.getElementById('utensiliosModal').classList.remove('active');
-        }
-
-        function adicionarUtensilio() {
-            var nome = document.getElementById('utensilioNome').value.trim();
-            if (!nome) { alert('Digite o nome.'); return; }
-            var codigo = 'UTIL_' + Date.now();
-            if (estoque.find(item => item.nome === nome && item.tipo === 'Utensílio')) {
-                alert('Já existe.');
-                return;
-            }
-            estoque.push({
-                codigo: codigo,
-                nome: nome,
-                tipo: 'Utensílio',
-                mercado: '',
-                estoque: 0,
-                minimo: 1,
-                preco: 0,
-                precoMin: 0,
-                precoMedio: 0
-            });
-            salvarDados();
-            renderizarTudo();
-            document.getElementById('utensilioNome').value = '';
-        }
-
-        function renderizarUtensilios() {
-            var utensilios = estoque.filter(item => item.tipo === 'Utensílio');
-            var container = document.getElementById('utensiliosLista');
-            if (!utensilios.length) {
-                container.innerHTML = '<div class="empty-msg">Nenhum utensílio</div>';
-                return;
-            }
-            var html = '';
-            utensilios.forEach(item => {
-                var presente = item.estoque > 0;
-                html += '<div class="utensilio-item">' +
-                    '<span><strong>' + item.nome + '</strong></span>' +
-                    '<span class="badge ' + (presente ? 'badge-success' : 'badge-danger') + '">' + (presente ? '✅ Presente' : '❌ Ausente') + '</span>' +
-                    '<div>' +
-                    (!presente ? '<button class="btn btn-success btn-sm" onclick="marcarPresente(\'' + item.codigo + '\')">✔</button>' : '') +
-                    '<button class="btn btn-danger btn-sm" onclick="excluirUtensilio(\'' + item.codigo + '\')">✕</button>' +
-                    '</div></div>';
-            });
-            container.innerHTML = html;
-        }
-
-        function marcarPresente(codigo) {
-            var item = estoque.find(it => it.codigo === codigo);
-            if (item) { item.estoque = 1;
-                salvarDados();
-                renderizarTudo(); }
-        }
-
-        function excluirUtensilio(codigo) {
-            if (confirm('Remover?')) {
-                var idx = estoque.findIndex(item => item.codigo === codigo);
-                if (idx !== -1) { estoque.splice(idx, 1);
-                    salvarDados();
-                    renderizarTudo(); }
-            }
-        }
-
-        // --- CARRINHO ---
-        function calcularFaltantes() {
-            var novo = [];
-            estoque.forEach(item => {
-                if (item.tipo !== 'Utensílio' && item.estoque < item.minimo) {
-                    novo.push({
-                        codigo: item.codigo,
-                        nome: item.nome,
-                        quantidade: item.minimo - item.estoque,
-                        preco: item.preco || 0
-                    });
-                }
-            });
-            carrinho = novo;
-            salvarDados();
-            renderizarCarrinho();
-        }
-
-        function renderizarCarrinho() {
-            var container = document.getElementById('cartContainer');
-            if (!carrinho.length) {
-                container.innerHTML = '<div class="empty-msg">Nenhum item para comprar.</div>';
-                return;
-            }
-            var html = '';
-            carrinho.forEach(item => {
-                html += '<div class="cart-item">' +
-                    '<span><strong>' + item.nome + '</strong> (' + item.codigo + ') - Qtd: ' + item.quantidade + '</span>' +
-                    '<span>' + (item.preco ? 'R$ ' + (item.preco * item.quantidade).toFixed(2).replace('.', ',') : '') + '</span>' +
-                    '</div>';
-            });
-            container.innerHTML = html;
-        }
-
-        function checarTudo() {
-            var agora = new Date();
-            var dataHora = agora.toLocaleDateString('pt-BR') + ' ' + agora.toLocaleTimeString('pt-BR');
-            var el = document.getElementById('checkResult');
-            if (!estoque.length) {
-                el.innerHTML = '<div class="check-result ok">🕒 ' + dataHora + '<br>✅ Nenhum item.</div>';
-                return;
-            }
-            var faltantes = estoque.filter(item => (item.tipo === 'Utensílio') ? item.estoque === 0 : item.estoque < item.minimo);
-            if (!faltantes.length) {
-                el.innerHTML = '<div class="check-result ok">🕒 ' + dataHora + '<br>✅ Todos OK!</div>';
-                return;
-            }
-            var html = '<div class="check-result falta">🕒 ' + dataHora + '<br>⚠️ Itens em falta:<ul>';
-            faltantes.forEach(item => {
-                var faltaMsg = item.tipo === 'Utensílio' ? 'ausente' : 'faltam ' + (item.minimo - item.estoque);
-                html += '<li>🔹 <strong>' + item.nome + '</strong> (' + item.codigo + ') - ' + faltaMsg + '</li>';
-            });
-            html += '</ul></div>';
-            el.innerHTML = html;
-        }
-
-        // --- FATURAMENTO ---
-        function atualizarFaturamentoHoje() {
-            var hoje = new Date().toLocaleDateString('pt-BR');
-            var vendasHoje = vendas.filter(v => v.data === hoje && v.codigo === 'MANUAL');
-            var el = document.getElementById('faturamentoHoje');
-            if (vendasHoje.length) {
-                var ultimo = vendasHoje[vendasHoje.length - 1];
-                el.textContent = 'R$ ' + ultimo.total.toFixed(2).replace('.', ',');
-            } else el.textContent = 'R$ 0,00';
-        }
-
-        function adicionarFaturamentoManual() {
-            var valor = parseFloat(document.getElementById('inputFaturamentoManual').value);
-            if (isNaN(valor) || valor <= 0) { alert('Digite um valor válido.'); return; }
-            var agora = new Date();
-            var data = agora.toLocaleDateString('pt-BR');
-            var hora = agora.toLocaleTimeString('pt-BR');
-            vendas.push({
-                data: data,
-                dataHora: data + ' ' + hora,
-                codigo: 'MANUAL',
-                nome: 'Venda Manual',
-                quantidade: 1,
-                valorUnitario: valor,
-                total: valor
-            });
-            salvarDados();
-            atualizarFaturamentoHoje();
-            document.getElementById('inputFaturamentoManual').value = '';
-            alert('Faturamento registrado!');
-        }
-
-        // --- EXTRATO ---
-        function abrirExtratoCompras() {
-            document.getElementById('extratoComprasModal').classList.add('active');
-            gerarExtratoCompras();
-        }
-
-        function fecharExtratoCompras() {
-            document.getElementById('extratoComprasModal').classList.remove('active');
-        }
-
-        function gerarExtratoCompras() {
-            var container = document.getElementById('extratoConteudo');
-            var compras = vendas.filter(v => v.tipo === 'COMPRA');
-            if (!compras.length) {
-                container.innerHTML = '<div class="empty-msg">Nenhuma compra registrada.</div>';
-                return;
-            }
-            compras.sort((a, b) => a.dataHora < b.dataHora ? 1 : -1);
-            var grupos = {};
-            compras.forEach(c => {
-                var chave = c.data + '|' + (c.mercado || 'Sem mercado');
-                if (!grupos[chave]) {
-                    grupos[chave] = { data: c.data, mercado: c.mercado || 'Sem mercado', itens: [], total: 0 };
-                }
-                grupos[chave].itens.push(c);
-                grupos[chave].total += c.total;
-            });
-            var html = '';
-            var chaves = Object.keys(grupos);
-            chaves.forEach(chave => {
-                var g = grupos[chave];
-                html += '<div class="extrato-item">';
-                html += '<div class="data-mercado"><span>📅 ' + g.data + '</span><span>🏪 ' + g.mercado + '</span><span style="font-weight:700;color:#16a34a;">R$ ' + g.total.toFixed(2).replace('.', ',') + '</span></div>';
-                html += '<div class="produtos">';
-                g.itens.forEach(item => {
-                    var unit = item.precoUnitario ? 'R$ ' + item.precoUnitario.toFixed(2).replace('.', ',') : '-';
-                    html += '<div class="prod-linha"><span>' + item.nome + ' (x' + item.quantidade + ')</span><span>' + unit + ' = R$ ' + item.total.toFixed(2).replace('.', ',') + '</span></div>';
-                });
-                html += '</div></div>';
-            });
-            var totalGeral = compras.reduce((acc, c) => acc + c.total, 0);
-            html += '<div class="extrato-total">💰 Total Geral: R$ ' + totalGeral.toFixed(2).replace('.', ',') + '</div>';
-            container.innerHTML = html;
-        }
-
-        function limparExtratoCompras() {
-            if (!confirm('Remover todo o histórico de compras?')) return;
-            vendas = vendas.filter(v => v.tipo !== 'COMPRA');
-            salvarDados();
-            gerarExtratoCompras();
-            alert('Histórico de compras removido!');
-        }
-
-        // --- RELATÓRIO MENSAL ---
+        // ============================================================
+        //  RELATÓRIO MENSAL (FATURAMENTO)
+        // ============================================================
         var mesRelatorio = new Date().getMonth(),
             anoRelatorio = new Date().getFullYear();
 
@@ -2612,9 +2829,7 @@
             gerarRelatorio();
         }
 
-        function fecharRelatorio() {
-            document.getElementById('relatorioModal').classList.remove('active');
-        }
+        function fecharRelatorio() { document.getElementById('relatorioModal').classList.remove('active'); }
 
         function mudarMes(delta) {
             mesRelatorio += delta;
@@ -2626,50 +2841,61 @@
         }
 
         function gerarRelatorio() {
-            var meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+            var meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro',
+                'Novembro', 'Dezembro'
+            ];
             document.getElementById('mesAnoLabel').textContent = meses[mesRelatorio] + ' ' + anoRelatorio;
-            var vendasFiltradas = vendas.filter(v => {
+            var vendasFiltradas = vendas.filter(function(v) {
                 var parts = v.data.split('/');
                 var mes = parseInt(parts[1]) - 1,
                     ano = parseInt(parts[2]);
                 return mes === mesRelatorio && ano === anoRelatorio;
             });
             var agrupado = {};
-            vendasFiltradas.forEach(v => { var dia = v.data.split('/')[0]; if (!agrupado[dia]) agrupado[dia] = 0;
+            vendasFiltradas.forEach(function(v) { var dia = v.data.split('/')[0]; if (!agrupado[dia]) agrupado[dia] = 0;
                 agrupado[dia] += v.total; });
-            var dias = Object.keys(agrupado).sort((a, b) => parseInt(a) - parseInt(b));
+            var dias = Object.keys(agrupado).sort(function(a, b) { return parseInt(a) - parseInt(b); });
             var html = '',
                 totalMes = 0;
             if (!dias.length) html = '<tr><td colspan="3" class="empty-msg">Nenhuma venda.</td></tr>';
-            else dias.forEach(dia => { var valor = agrupado[dia];
+            else dias.forEach(function(dia) { var valor = agrupado[dia];
                 totalMes += valor;
-                html += '<tr><td><span onclick="verDetalhesDia(\'' + dia + '\')" style="cursor:pointer;color:#2563eb;text-decoration:underline;">' + dia + '</span></td>' +
+                html += '<tr><td><span onclick="verDetalhesDia(\'' + dia +
+                    '\')" style="cursor:pointer;color:#2563eb;text-decoration:underline;">' + dia +
+                    '</span></td>' +
                     '<td>R$ ' + valor.toFixed(2).replace('.', ',') + '</td>' +
-                    '<td><button class="btn btn-sm btn-primary" onclick="verDetalhesDia(\'' + dia + '\')">Ver</button></td></tr>'; });
+                    '<td><button class="btn btn-sm btn-primary" onclick="verDetalhesDia(\'' + dia +
+                    '\')">Ver</button></td></tr>'; });
             document.getElementById('relatorioTabela').innerHTML = html;
             document.getElementById('relatorioTotalMes').textContent = 'Total: R$ ' + totalMes.toFixed(2).replace('.', ',');
         }
 
         function verDetalhesDia(dia) {
             var dataStr = dia + '/' + (mesRelatorio + 1).toString().padStart(2, '0') + '/' + anoRelatorio;
-            var vendasDoDia = vendas.filter(v => v.data === dataStr);
+            var vendasDoDia = vendas.filter(function(v) { return v.data === dataStr; });
             if (!vendasDoDia.length) { alert('Nenhuma venda.'); return; }
             document.getElementById('detalhesTitulo').textContent = '📋 Vendas ' + dataStr;
-            var html = '<table style="width:100%;font-size:11px;"><thead><tr><th>Hora</th><th>Produto</th><th>Qtd</th><th>Unit.</th><th>Total</th></tr></thead><tbody>';
-            vendasDoDia.forEach(v => {
+            var html =
+                '<table style="width:100%;font-size:11px;"><thead><tr><th>Hora</th><th>Produto</th><th>Qtd</th><th>Unit.</th><th>Total</th></tr></thead><tbody>';
+            vendasDoDia.forEach(function(v) {
                 var hora = v.dataHora ? v.dataHora.split(' ')[1] : '--:--';
-                html += '<tr><td>' + hora + '</td><td>' + v.nome + '</td><td>' + v.quantidade + '</td><td>R$ ' + v.valorUnitario.toFixed(2).replace('.', ',') + '</td><td>R$ ' + v.total.toFixed(2).replace('.', ',') + '</td></tr>';
+                html += '<tr><td>' + hora + '</td><td>' + v.nome + '</td><td>' + v.quantidade +
+                    '</td><td>R$ ' + v.valorUnitario.toFixed(2).replace('.', ',') +
+                    '</td><td>R$ ' + v.total.toFixed(2).replace('.', ',') + '</td></tr>';
             });
-            html += '</tbody></table><div style="margin-top:6px;font-weight:700;text-align:right;font-size:12px;">Total: R$ ' + vendasDoDia.reduce((acc, v) => acc + v.total, 0).toFixed(2).replace('.', ',') + '</div>';
+            html +=
+                '</tbody></table><div style="margin-top:6px;font-weight:700;text-align:right;font-size:12px;">Total: R$ ' +
+                vendasDoDia.reduce(function(acc, v) { return acc + v.total; }, 0).toFixed(2).replace('.', ',') +
+                '</div>';
             document.getElementById('detalhesConteudo').innerHTML = html;
             document.getElementById('detalhesModal').classList.add('active');
         }
 
-        function fecharDetalhes() {
-            document.getElementById('detalhesModal').classList.remove('active');
-        }
+        function fecharDetalhes() { document.getElementById('detalhesModal').classList.remove('active'); }
 
-        // --- RELATÓRIO MERCADOS ---
+        // ============================================================
+        //  RELATÓRIO DE MERCADOS
+        // ============================================================
         function abrirRelatorioMercados() {
             document.getElementById('relatorioMercadosModal').classList.add('active');
             gerarRelatorioMercados();
@@ -2686,7 +2912,7 @@
                 container.innerHTML = '<div class="empty-msg">Selecione um mês para filtrar.</div>';
                 return;
             }
-            var compras = vendas.filter(v => {
+            var compras = vendas.filter(function(v) {
                 if (v.tipo !== 'COMPRA') return false;
                 var parts = v.data.split('/');
                 if (parts.length !== 3) return false;
@@ -2702,11 +2928,17 @@
             }
 
             var grupos = {};
-            compras.forEach(c => {
+            compras.forEach(function(c) {
                 var chave = c.codigo + '|' + c.mercado;
                 if (!grupos[chave]) {
-                    grupos[chave] = { codigo: c.codigo, nome: c.nome, mercado: c.mercado, precos: [], qtdTotal: 0,
-                        valorTotal: 0 };
+                    grupos[chave] = {
+                        codigo: c.codigo,
+                        nome: c.nome,
+                        mercado: c.mercado,
+                        precos: [],
+                        qtdTotal: 0,
+                        valorTotal: 0
+                    };
                 }
                 grupos[chave].precos.push(c.precoUnitario);
                 grupos[chave].qtdTotal += c.quantidade;
@@ -2714,12 +2946,16 @@
             });
 
             var produtos = {};
-            Object.keys(grupos).forEach(key => {
+            Object.keys(grupos).forEach(function(key) {
                 var g = grupos[key];
-                var soma = g.precos.reduce((a, b) => a + b, 0);
+                var soma = g.precos.reduce(function(a, b) { return a + b; }, 0);
                 var media = soma / g.precos.length;
                 if (!produtos[g.codigo]) {
-                    produtos[g.codigo] = { nome: g.nome, codigo: g.codigo, mercados: {} };
+                    produtos[g.codigo] = {
+                        nome: g.nome,
+                        codigo: g.codigo,
+                        mercados: {}
+                    };
                 }
                 produtos[g.codigo].mercados[g.mercado] = {
                     precoMedio: media,
@@ -2739,41 +2975,45 @@
 
             html += '<div class="resumo-card"><strong>📊 Resumo do período</strong><br>' +
                 'Total de compras: ' + compras.length + ' | Produtos distintos: ' + codigos.length +
-                ' | Mercados envolvidos: ' + Object.keys(mercados).length +
+                ' | Mercados envolvidos: ' + Object.keys(getMercados()).length +
                 '</div>';
 
             html += '<table style="width:100%; font-size:10px; min-width:300px;">';
             html += '<thead><tr><th>Produto</th><th>Mercado</th><th>Preço Médio</th><th>Qtd Total</th><th>Status</th></tr></thead>';
             html += '<tbody>';
 
-            codigos.forEach(codigo => {
+            codigos.forEach(function(codigo) {
                 var prod = produtos[codigo];
-                var mktList = Object.keys(prod.mercados);
-                mktList.sort((a, b) => prod.mercados[a].precoMedio - prod.mercados[b].precoMedio);
+                var mercados = Object.keys(prod.mercados);
+                mercados.sort(function(a, b) {
+                    return prod.mercados[a].precoMedio - prod.mercados[b].precoMedio;
+                });
 
-                var maisBarato = mktList[0];
-                var maisCaro = mktList[mktList.length - 1];
+                var maisBarato = mercados[0];
+                var maisCaro = mercados[mercados.length - 1];
 
-                mktList.forEach(mercado => {
+                mercados.forEach(function(mercado) {
                     var dados = prod.mercados[mercado];
                     var status = '';
                     var classe = '';
-                    if (mercado === maisBarato && mktList.length > 1) {
+                    if (mercado === maisBarato && mercados.length > 1) {
                         status = '🏷️ Mais Barato';
                         classe = 'preco-barato';
-                    } else if (mercado === maisCaro && mktList.length > 1) {
+                    } else if (mercado === maisCaro && mercados.length > 1) {
                         status = '💸 Mais Caro';
                         classe = 'preco-caro';
-                    } else if (mktList.length > 2) {
+                    } else if (mercados.length > 2) {
                         status = '⚖️ Médio';
                         classe = 'preco-medio';
                     } else {
                         status = '—';
                     }
                     html += '<tr>' +
-                        '<td><strong>' + prod.nome + '</strong><br><span style="font-size:8px;color:#94a3b8;">' + prod.codigo + '</span></td>' +
+                        '<td><strong>' + prod.nome + '</strong><br><span style="font-size:8px;color:#94a3b8;">' +
+                        prod.codigo + '</span></td>' +
                         '<td>' + mercado + '</td>' +
-                        '<td class="' + classe + '">R$ ' + dados.precoMedio.toFixed(2).replace('.', ',') + '</td>' +
+                        '<td class="' + classe + '">R$ ' + dados.precoMedio.toFixed(2).replace('.', ',') +
+                        '</td>' +
                         '<td>' + dados.qtdTotal + '</td>' +
                         '<td>' + status + '</td>' +
                         '</tr>';
@@ -2784,147 +3024,30 @@
             container.innerHTML = html;
         }
 
-        // --- CARDÁPIO ---
-        function getCardapio() { return cardapioFotos; }
-
-        function setCardapio(fotos) {
-            cardapioFotos = fotos;
-            salvarDados();
-            renderizarCardapio();
-        }
-
-        function adicionarFotoCardapio(base64, nome) {
-            var id = Date.now();
-            var data = new Date().toLocaleString('pt-BR');
-            cardapioFotos.push({ id: id, nome: nome || 'Cardápio - ' + data, imagem: base64, data: data });
-            salvarDados();
-            renderizarCardapio();
-        }
-
-        function removerFotoCardapio(id) {
-            if (!confirm('Remover esta foto do cardápio?')) return;
-            cardapioFotos = cardapioFotos.filter(f => f.id !== id);
-            salvarDados();
-            renderizarCardapio();
-        }
-
-        function limparCardapio() {
-            if (!confirm('Remover todas as fotos do cardápio?')) return;
-            cardapioFotos = [];
-            salvarDados();
-            renderizarCardapio();
-        }
-
-        function renderizarCardapio() {
-            var container = document.getElementById('cardapioGaleria');
-            if (!cardapioFotos.length) {
-                container.innerHTML = '<div class="empty-msg">Nenhuma foto do cardápio.</div>';
-                return;
-            }
-            var html = '';
-            cardapioFotos.forEach(f => {
-                html += '<div class="cardapio-item">' +
-                    '<img src="' + f.imagem + '" alt="' + f.nome + '">' +
-                    '<div class="info"><span>' + f.nome + '</span><span class="del" onclick="removerFotoCardapio(' + f.id + ')">✕</span></div>' +
-                    '</div>';
-            });
-            container.innerHTML = html;
-        }
-
-        function abrirCardapio() {
-            document.getElementById('cardapioModal').classList.add('active');
-            renderizarCardapio();
-        }
-
-        function fecharCardapio() {
-            document.getElementById('cardapioModal').classList.remove('active');
-        }
-
-        function tirarFotoCardapio() {
-            var input = document.createElement('input');
-            input.type = 'file';
-            input.accept = 'image/*';
-            input.capture = 'environment';
-            input.onchange = function(e) {
-                var file = e.target.files[0];
-                if (!file) return;
-                var reader = new FileReader();
-                reader.onload = function(ev) {
-                    var base64 = ev.target.result;
-                    var nome = prompt('Nome da foto (opcional):') || 'Cardápio - ' + new Date().toLocaleString('pt-BR');
-                    adicionarFotoCardapio(base64, nome);
-                };
-                reader.readAsDataURL(file);
-                input.value = '';
-            };
-            input.click();
-        }
-
-        function uploadFotosCardapio(event) {
-            var files = event.target.files;
-            if (!files.length) return;
-            for (var i = 0; i < files.length; i++) {
-                var file = files[i];
-                var reader = new FileReader();
-                reader.onload = function(ev) {
-                    var base64 = ev.target.result;
-                    var nome = prompt('Nome da foto (opcional):') || 'Cardápio - ' + new Date().toLocaleString('pt-BR');
-                    adicionarFotoCardapio(base64, nome);
-                };
-                reader.readAsDataURL(file);
-            }
-            event.target.value = '';
-        }
-
-        function abrirCardapioOnline() {
-            if (!cardapioFotos.length) { alert('Nenhuma foto para exibir.'); return; }
-            var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Cardápio Online</title><style>body{background:#f1f5f9;padding:16px;font-family:sans-serif;}h1{text-align:center;color:#0f3b5e;}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;max-width:1200px;margin:0 auto;}.item{background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 2px 4px rgba(0,0,0,0.1);}.item img{width:100%;height:200px;object-fit:cover;display:block;}.item .info{padding:6px 10px;font-size:14px;color:#475569;text-align:center;}</style></head><body><h1>📋 Cardápio</h1><div class="grid">';
-            cardapioFotos.forEach(f => {
-                html += '<div class="item"><img src="' + f.imagem + '" alt="' + f.nome + '"><div class="info">' + f.nome + '</div></div>';
-            });
-            html += '</div></body></html>';
-            var blob = new Blob([html], { type: 'text/html' });
-            var url = URL.createObjectURL(blob);
-            window.open(url, '_blank');
-        }
-
         // ============================================================
         //  ATUALIZAR LISTA
         // ============================================================
         function atualizarLista() {
-            carregarDadosLocal();
-            renderizarTudo();
+            carregarDados();
+            renderizarEstoque();
+            renderizarCarrinho();
+            renderizarMercados();
+            atualizarFaturamentoHoje();
             document.getElementById('checkResult').innerHTML = '';
             document.getElementById('reportArea').style.display = 'none';
+            atualizarAlertas();
             alert('Lista atualizada!');
         }
 
         // ============================================================
-        //  INICIALIZAÇÃO
+        //  EVENTOS
         // ============================================================
-        function init() {
-            carregarTitulo();
-            var now = new Date();
-            var mesAtual = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
-            document.getElementById('filtroMesMercado').value = mesAtual;
-
-            // Tenta carregar do Firestore, se falhar usa localStorage
-            if (db) {
-                carregarDadosDoFirestore().catch(() => {
-                    carregarDadosLocal();
-                    renderizarTudo();
-                });
-            } else {
-                carregarDadosLocal();
-                renderizarTudo();
-            }
-        }
-
-        // Evento Enter nos campos
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Enter') {
                 var active = document.activeElement;
-                if (['productBarcode', 'productName', 'productStock', 'productMin', 'productPrice', 'productPrecoMin', 'productPrecoMedio'].indexOf(active.id) !== -1) {
+                if (['productBarcode', 'productName', 'productStock', 'productMin', 'productPrice', 'productPrecoMin',
+                        'productPrecoMedio'
+                    ].indexOf(active.id) !== -1) {
                     e.preventDefault();
                     salvarProduto();
                 }
@@ -2944,55 +3067,16 @@
         });
 
         // Fechar modais ao clicar fora
-        document.querySelectorAll('.modal-overlay').forEach(el => {
+        document.querySelectorAll('.modal-overlay').forEach(function(el) {
             el.addEventListener('click', function(e) {
-                if (e.target === this) this.classList.remove('active');
+                if (e.target === this) {
+                    this.classList.remove('active');
+                }
             });
         });
 
         // Iniciar
         init();
-</script>
-
-<!-- Firebase SDKs como módulos -->
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
-    import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
-
-    const firebaseConfig = {
-     apiKey:"AIzaSyD7f9Mte-GACY2fcF8q88BCxuuy-r5nzl0",
-        authDomain:"appestoque-b7c6e.firebaseapp.com",
-        projectId:"appestoque-b7c6e",
-  storageBucket:"appestoque-b7c6.firebasestorage.app,
-        messagingSenderId:"779055449959",
-        appId:"1:779055449959:web:9b7ccd3db615611b7691c2"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-
-    window.firebaseSalvar = async (dados) => {
-        try {
-            await setDoc(doc(db, "banco", "meu_estoque_oficial"), dados);
-            console.log("✅ Backup salvo na nuvem!");
-        } catch (e) {
-            console.error("❌ Erro ao salvar na nuvem:",e);
-        }
-    };
-
-    window.firebaseCarregar = async () => {
-        try {
-            const docSnap = await getDoc(doc(db, "banco", "meu_estoque_oficial"));
-            if (docSnap.exists()) {
-                console.log("✅ Dados baixados da nuvem!");
-                return docSnap.data();
-            }
-            return null;
-        } catch (e) {
-            console.error("❌ Erro ao buscar da nuvem: ", e);
-            return null;
-        }
-    };
-</script>
+    </script>
 </body>
 </html>
